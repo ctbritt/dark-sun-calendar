@@ -1,5 +1,3 @@
-console.log("foundry-integration.js loaded");
-
 /**
  * FoundryVTT Integration for Dark Sun Calendar
  * ===========================================
@@ -531,8 +529,8 @@ class FoundryDarkSunCalendar {
   /**
    * Show chat command help
    */
-  showChatHelp() {
-    this.sendChatMessage(`
+  async showChatHelp() {
+    await this.sendChatMessage(`
             <div class="dark-sun-chat">
                 <h3>Dark Sun Calendar Commands</h3>
                 <p><strong>/darksun date</strong> - Show current Athasian date</p>
@@ -551,7 +549,7 @@ class FoundryDarkSunCalendar {
 
     switch (command) {
       case "date":
-        this.sendChatMessage(`
+        await this.sendChatMessage(`
                     <div class="dark-sun-chat">
                         <h3>Current Athasian Date</h3>
                         <p><strong>Kings Age:</strong> ${currentDate.kingsAge}</p>
@@ -561,14 +559,25 @@ class FoundryDarkSunCalendar {
                 `);
         break;
       case "moons":
-        this.chatCommand("moons");
+        await this.sendChatMessage(`
+                    <div class="dark-sun-chat">
+                        <h3>🌙 Moon Phases</h3>
+                        <p><strong>Ral (Green):</strong> ${currentDate.moons.ral.phaseName} (${currentDate.moons.ral.illumination}%)</p>
+                        <p><strong>Guthay (Golden):</strong> ${currentDate.moons.guthay.phaseName} (${currentDate.moons.guthay.illumination}%)</p>
+                    </div>
+                `);
         break;
       case "advance":
         const days = parseInt(args[0]) || 1;
-        this.chatCommand("advance", [days]);
+        if (game.user.isGM) {
+          await globalThis.DSC.advanceDays(days);
+          await this.sendChatMessage(`Advanced ${days} day(s)`);
+        } else {
+          await this.sendChatMessage("Only GMs can advance time");
+        }
         break;
       default:
-        this.showChatHelp();
+        await this.showChatHelp();
         break;
     }
   }
@@ -576,10 +585,10 @@ class FoundryDarkSunCalendar {
   /**
    * Send a chat message to the chat log
    */
-  sendChatMessage(message) {
-    ChatLog.post({
+  async sendChatMessage(message) {
+    await ChatMessage.create({
       content: message,
-      type: CONST.CHAT_MESSAGE_TYPES.OOC,
+      style: CONST.CHAT_MESSAGE_STYLES.OOC,
     });
   }
 
@@ -682,8 +691,6 @@ class FoundryDarkSunCalendar {
       this.seasonsStarsIntegration.setEnhancementsEnabled(
         this.settings.seasonsStarsEnhancements
       );
-
-      console.log("Dark Sun Calendar: Seasons & Stars integration configured");
     } catch (error) {
       console.error(
         "Dark Sun Calendar: Failed to initialize Seasons & Stars integration:",
@@ -729,10 +736,10 @@ class FoundryDarkSunCalendar {
   /**
    * Check for eclipses and notify
    */
-  checkForEclipses() {
+  async checkForEclipses() {
     const currentDate = this.calendar.getCurrentDate();
     if (currentDate.eclipse && currentDate.eclipse.type !== "none") {
-      this.sendChatMessage(`
+      await this.sendChatMessage(`
         <div class="dark-sun-chat eclipse-notification">
           <h3>🌙 Eclipse Event 🌙</h3>
           <p><strong>Type:</strong> ${
@@ -764,9 +771,6 @@ window.DSC = globalThis.DSC = {
 
 // Properly register the module with FoundryVTT
 Hooks.once("init", async () => {
-  console.log("Hooks.once('init') fired");
   globalThis.foundryDarkSunCalendar = new FoundryDarkSunCalendar();
-  console.log("FoundryDarkSunCalendar instance created");
   await globalThis.foundryDarkSunCalendar.initialize();
-  console.log("FoundryDarkSunCalendar.initialize() complete");
 });

@@ -14,13 +14,13 @@ let CALENDAR_DATA = null;
  */
 export function initializeCalendarCore(calendarData) {
   CALENDAR_DATA = calendarData;
-  console.log("[DSC] CALENDAR_DATA initialized:", CALENDAR_DATA);
-  console.log("[DSC] Months loaded:", CALENDAR_DATA.months);
-  console.log("[DSC] Intercalary periods loaded:", CALENDAR_DATA.intercalary);
-  console.log(
-    "[DSC] Year names loaded:",
-    CALENDAR_DATA.extensions?.["seasons-and-stars"]?.namedYears?.names
-  );
+  // console.log("[DSC] CALENDAR_DATA initialized:", CALENDAR_DATA);
+  // console.log("[DSC] Months loaded:", CALENDAR_DATA.months);
+  // console.log("[DSC] Intercalary periods loaded:", CALENDAR_DATA.intercalary);
+  // console.log(
+  //   "[DSC] Year names loaded:",
+  //   CALENDAR_DATA.extensions?.["seasons-and-stars"]?.namedYears?.names
+  // );
 }
 
 // Helper to ensure data is loaded

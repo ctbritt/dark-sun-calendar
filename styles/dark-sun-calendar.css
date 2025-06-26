@@ -14,6 +14,20 @@
   padding: 20px;
 }
 
+.dsc-calendar-container h2 {
+  font-family: "Antique Packard Bold", "Packard", fantasy, serif;
+  color: #ffd700;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+  margin-bottom: 12px;
+}
+
+.dsc-calendar-container h3 {
+  font-family: "Antique Packard Bold", "Packard", fantasy, serif;
+  color: #ffd700;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+  margin-bottom: 10px;
+}
+
 .dsc-calendar-container .calendar-header {
   text-align: center;
   margin-bottom: 24px;

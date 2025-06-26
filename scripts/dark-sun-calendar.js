@@ -357,7 +357,6 @@ class DarkSunCalendar {
    * @param {number} dayOfYear - Day of the year
    */
   setDate(kingsAge, yearInAge, dayOfYear) {
-    console.log("DSC.setDate called with", { kingsAge, yearInAge, dayOfYear });
     this.currentState.kingsAge = kingsAge;
     this.currentState.yearInAge = yearInAge;
     this.currentState.dayOfYear = dayOfYear;
@@ -527,8 +526,6 @@ if (typeof module !== "undefined" && module.exports) {
     window.addEventListener("load", async () => {
       try {
         darkSunCalendar = await initializeDarkSunCalendar();
-        console.log("Dark Sun Calendar initialized successfully");
-        console.log("Diagnostics:", darkSunCalendar.getDiagnostics());
       } catch (error) {
         console.error("Failed to initialize Dark Sun Calendar:", error);
       }

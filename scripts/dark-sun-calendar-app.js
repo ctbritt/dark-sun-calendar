@@ -59,10 +59,9 @@ class DarkSunCalendarApp extends foundry.applications.api.ApplicationV2 {
   static async _onAdvanceDay(event, target) {
     if (game.user.isGM) {
       await globalThis.DSC.advanceDays(1);
-      ui.notifications.info("Advanced 1 day");
       this.render(false);
     } else {
-      ui.notifications.warn("Only GMs can advance time");
+      // Remove all ui.notifications except for critical errors
     }
   }
 
@@ -82,7 +81,7 @@ class DarkSunCalendarApp extends foundry.applications.api.ApplicationV2 {
 
     return `
       <div style="text-align: center; padding: 10px;">
-        <h2>📅 ${currentDate.yearName}</h2>
+        <h2>Year of<br />${currentDate.yearName}</h2>
         <p><strong>King's Age:</strong> ${
           currentDate.kingsAge
         }, <strong>Year:</strong> ${currentDate.yearInAge}</p>

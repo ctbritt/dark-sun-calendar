@@ -56,7 +56,6 @@ class SeasonsStarsIntegration {
       }
 
       this.isInitialized = true;
-      console.log("Dark Sun Calendar: Seasons & Stars integration initialized");
     } catch (error) {
       console.error(
         "Dark Sun Calendar: Failed to initialize Seasons & Stars integration:",
@@ -95,16 +94,8 @@ class SeasonsStarsIntegration {
   setupHooks() {
     // Listen for Seasons & Stars date changes
     Hooks.on("seasons-stars:dateChanged", (data) => {
-      console.log("DSC: seasons-stars:dateChanged hook fired", data);
       if (this.syncEnabled && data.newDate) {
         const nd = data.newDate;
-        console.log("DSC: onSeasonsStarsDateChange called with", {
-          year: nd.year,
-          month: nd.month,
-          day: nd.day,
-          intercalary: nd.intercalary,
-          weekday: nd.weekday,
-        });
         this.onSeasonsStarsDateChange(data.newDate);
       }
     });
@@ -112,9 +103,6 @@ class SeasonsStarsIntegration {
     // Listen for calendar changes
     Hooks.on("seasons-stars:calendarChanged", (data) => {
       if (data.calendarId === this.calendarId) {
-        console.log(
-          "Dark Sun Calendar: Seasons & Stars switched to Dark Sun calendar"
-        );
         this.syncFromSeasonsStars();
       }
     });
@@ -368,10 +356,6 @@ class SeasonsStarsIntegration {
           }
         },
       };
-
-      console.log(
-        "Dark Sun Calendar: Enhanced Seasons & Stars with astronomical data"
-      );
     } catch (error) {
       console.error(
         "Dark Sun Calendar: Error enhancing Seasons & Stars:",
@@ -428,11 +412,6 @@ class SeasonsStarsIntegration {
    */
   setSyncEnabled(enabled) {
     this.syncEnabled = enabled;
-    console.log(
-      `Dark Sun Calendar: Seasons & Stars sync ${
-        enabled ? "enabled" : "disabled"
-      }`
-    );
   }
 
   /**
@@ -440,11 +419,6 @@ class SeasonsStarsIntegration {
    */
   setEnhancementsEnabled(enabled) {
     this.enhancementsEnabled = enabled;
-    console.log(
-      `Dark Sun Calendar: Seasons & Stars enhancements ${
-        enabled ? "enabled" : "disabled"
-      }`
-    );
   }
 
   /**
