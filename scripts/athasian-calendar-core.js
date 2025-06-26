@@ -107,8 +107,8 @@ const SOFEAN_CYCLE = [
   "Agitation",
 ];
 
-// New epoch offset: days from KA 1, Y1, D1 to KA 190, Y1, D1
-const EPOCH_OFFSET = (190 - 1) * YEARS_PER_KINGS_AGE * DAYS_PER_YEAR; // 5,457,375
+// New epoch offset: days from KA 1, Y1, D1 to KA 1, Y1, D1
+const EPOCH_OFFSET = 0; // Now epoch is KA1, Y1, D1
 
 /**
  * Core Date Conversion Functions
@@ -335,6 +335,28 @@ function validateCalendarMath() {
   return true;
 }
 
+/**
+ * Convert (kingsAge, yearInAge) to absolute year (1-based)
+ * @param {number} kingsAge
+ * @param {number} yearInAge
+ * @returns {number} absoluteYear
+ */
+function toAbsoluteYear(kingsAge, yearInAge) {
+  return (kingsAge - 1) * YEARS_PER_KINGS_AGE + yearInAge;
+}
+
+/**
+ * Convert absolute year (1-based) to {kingsAge, yearInAge}
+ * @param {number} absoluteYear
+ * @returns {{kingsAge: number, yearInAge: number}}
+ */
+function fromAbsoluteYear(absoluteYear) {
+  return {
+    kingsAge: Math.floor((absoluteYear - 1) / YEARS_PER_KINGS_AGE) + 1,
+    yearInAge: ((absoluteYear - 1) % YEARS_PER_KINGS_AGE) + 1,
+  };
+}
+
 // Export functions for use in other modules
 if (typeof module !== "undefined" && module.exports) {
   // Node.js environment
@@ -355,6 +377,8 @@ if (typeof module !== "undefined" && module.exports) {
     SOFEAN_CYCLE,
     getSeasons,
     getTotalDaysPerYear,
+    toAbsoluteYear,
+    fromAbsoluteYear,
   };
 } else {
   // Browser/FoundryVTT environment
@@ -377,6 +401,8 @@ if (typeof module !== "undefined" && module.exports) {
     getTotalDaysPerYear,
     getMonths,
     getIntercalary,
+    toAbsoluteYear,
+    fromAbsoluteYear,
   };
 }
 

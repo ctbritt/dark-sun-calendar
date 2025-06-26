@@ -27,7 +27,7 @@ class DarkSunCalendar {
     // Current calendar state
     this.currentState = {
       kingsAge: 190,
-      year: 1,
+      yearInAge: 26,
       dayOfYear: 1,
       hour: 12,
       minute: 0,
@@ -35,9 +35,9 @@ class DarkSunCalendar {
 
     // Calendar metadata
     this.metadata = {
-      epochName: "King's Age 190, Year 1, Day 1",
+      epochName: "King's Age 1, Year 1, Day 1",
       epochDescription:
-        "Grand Eclipse - Both moons full in perfect alignment (new epoch)",
+        "Creation of the King's Age calendar by the nature-masters (new epoch)",
       version: "2.0.0",
       lastUpdate: new Date().toISOString(),
     };
@@ -54,7 +54,7 @@ class DarkSunCalendar {
   getCurrentDate() {
     return this.getDateInfo(
       this.currentState.kingsAge,
-      this.currentState.year,
+      this.currentState.yearInAge,
       this.currentState.dayOfYear
     );
   }
@@ -62,18 +62,18 @@ class DarkSunCalendar {
   /**
    * Get complete calendar data for any date
    * @param {number} kingsAge - King's Age
-   * @param {number} year - Year within the age
+   * @param {number} yearInAge - Year within the age
    * @param {number} dayOfYear - Day of the year
    * @returns {object} Complete calendar information
    */
-  getDateInfo(kingsAge, year, dayOfYear) {
+  getDateInfo(kingsAge, yearInAge, dayOfYear) {
     const absoluteDay = window.AthasianCalendarCore.toAbsoluteDays(
       kingsAge,
-      year,
+      yearInAge,
       dayOfYear
     );
     const monthInfo = window.AthasianCalendarCore.resolveMonthAndDay(dayOfYear);
-    const yearName = window.AthasianCalendarCore.getYearName(year);
+    const yearName = window.AthasianCalendarCore.getYearName(yearInAge);
     const moonData = this.moonSystem.getBothMoons(absoluteDay);
     const eclipseInfo = this.eclipseCalculator.getEclipseInfo(absoluteDay);
     const seasonInfo = this.getSeasonInfo(dayOfYear);
@@ -85,13 +85,20 @@ class DarkSunCalendar {
     // Intercalary period information
     const intercalaryInfo = this.getIntercalaryInfo(dayOfYear);
 
+    // Compute absolute year for display/integration
+    const absoluteYear = window.AthasianCalendarCore.toAbsoluteYear(
+      kingsAge,
+      yearInAge
+    );
+
     return {
       // Basic date information
       kingsAge,
-      year,
+      yearInAge,
       dayOfYear,
       absoluteDay,
       yearName,
+      absoluteYear,
 
       // Month and day breakdown
       month: monthInfo.month,
@@ -141,10 +148,10 @@ class DarkSunCalendar {
       season: seasonInfo,
 
       // Special events and conditions
-      events: this.getSpecialEvents(kingsAge, year, dayOfYear),
+      events: this.getSpecialEvents(kingsAge, yearInAge, dayOfYear),
 
       // Free Year calculation (for compatibility)
-      freeYear: this.calculateFreeYear(kingsAge, year),
+      freeYear: this.calculateFreeYear(kingsAge, yearInAge),
 
       // Metadata
       metadata: this.metadata,
@@ -221,15 +228,15 @@ class DarkSunCalendar {
   /**
    * Get special events for a given date
    * @param {number} kingsAge - King's Age
-   * @param {number} year - Year within the age
+   * @param {number} yearInAge - Year within the age
    * @param {number} dayOfYear - Day of the year
    * @returns {Array} Array of special events
    */
-  getSpecialEvents(kingsAge, year, dayOfYear) {
+  getSpecialEvents(kingsAge, yearInAge, dayOfYear) {
     const events = [];
     const absoluteDay = window.AthasianCalendarCore.toAbsoluteDays(
       kingsAge,
-      year,
+      yearInAge,
       dayOfYear
     );
 
@@ -251,7 +258,7 @@ class DarkSunCalendar {
     }
 
     // Messenger appearances (every 45 years until KA 190)
-    if (kingsAge < 190 && year % 45 === 0) {
+    if (kingsAge < 190 && yearInAge % 45 === 0) {
       events.push({
         type: "messenger",
         importance: "major",
@@ -278,7 +285,7 @@ class DarkSunCalendar {
     // Historical events (would be loaded from historical_events.json)
     const historicalEvents = this.getHistoricalEvents(
       kingsAge,
-      year,
+      yearInAge,
       dayOfYear
     );
     events.push(...historicalEvents);
@@ -310,11 +317,11 @@ class DarkSunCalendar {
   /**
    * Get historical events for a date (placeholder - would load from JSON)
    * @param {number} kingsAge - King's Age
-   * @param {number} year - Year within the age
+   * @param {number} yearInAge - Year within the age
    * @param {number} dayOfYear - Day of the year
    * @returns {Array} Historical events
    */
-  getHistoricalEvents(kingsAge, year, dayOfYear) {
+  getHistoricalEvents(kingsAge, yearInAge, dayOfYear) {
     // This would load and filter from historical_events.json
     // For now, return empty array
     return [];
@@ -323,12 +330,12 @@ class DarkSunCalendar {
   /**
    * Calculate Free Year for compatibility
    * @param {number} kingsAge - King's Age
-   * @param {number} year - Year within the age
+   * @param {number} yearInAge - Year within the age
    * @returns {number} Free Year
    */
-  calculateFreeYear(kingsAge, year) {
+  calculateFreeYear(kingsAge, yearInAge) {
     // Free Year calculation: (KingsAge - 190) * 77 + (Year - 26) + 1
-    return (kingsAge - 190) * 77 + (year - 26) + 1;
+    return (kingsAge - 190) * 77 + (yearInAge - 26) + 1;
   }
 
   /**
@@ -346,13 +353,13 @@ class DarkSunCalendar {
   /**
    * Set current date
    * @param {number} kingsAge - King's Age
-   * @param {number} year - Year within the age
+   * @param {number} yearInAge - Year within the age
    * @param {number} dayOfYear - Day of the year
    */
-  setDate(kingsAge, year, dayOfYear) {
-    console.log("DSC.setDate called with", { kingsAge, year, dayOfYear });
+  setDate(kingsAge, yearInAge, dayOfYear) {
+    console.log("DSC.setDate called with", { kingsAge, yearInAge, dayOfYear });
     this.currentState.kingsAge = kingsAge;
-    this.currentState.year = year;
+    this.currentState.yearInAge = yearInAge;
     this.currentState.dayOfYear = dayOfYear;
   }
 
@@ -373,7 +380,7 @@ class DarkSunCalendar {
   advanceDays(days) {
     const currentAbsolute = window.AthasianCalendarCore.toAbsoluteDays(
       this.currentState.kingsAge,
-      this.currentState.year,
+      this.currentState.yearInAge,
       this.currentState.dayOfYear
     );
 
@@ -381,7 +388,7 @@ class DarkSunCalendar {
     const newDate = window.AthasianCalendarCore.fromAbsoluteDays(newAbsolute);
 
     this.currentState.kingsAge = newDate.kingsAge;
-    this.currentState.year = newDate.year;
+    this.currentState.yearInAge = newDate.year;
     this.currentState.dayOfYear = newDate.dayOfYear;
   }
 
@@ -410,7 +417,7 @@ class DarkSunCalendar {
   getNextEclipse() {
     const currentAbsolute = window.AthasianCalendarCore.toAbsoluteDays(
       this.currentState.kingsAge,
-      this.currentState.year,
+      this.currentState.yearInAge,
       this.currentState.dayOfYear
     );
 
@@ -424,7 +431,7 @@ class DarkSunCalendar {
   getYearlyEclipses() {
     return this.eclipseCalculator.getYearlyEclipseCalendar(
       this.currentState.kingsAge,
-      this.currentState.year
+      this.currentState.yearInAge
     );
   }
 
@@ -460,7 +467,7 @@ class DarkSunCalendar {
 
     return {
       version: this.metadata.version,
-      currentDate: `KA${currentDate.kingsAge}, Y${currentDate.year}, D${currentDate.dayOfYear}`,
+      currentDate: `KA${currentDate.kingsAge}, Y${currentDate.yearInAge}, D${currentDate.dayOfYear}`,
       currentYearName: currentDate.yearName,
       absoluteDay: currentDate.absoluteDay,
       moonPhases: {

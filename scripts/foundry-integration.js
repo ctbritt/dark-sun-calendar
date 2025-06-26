@@ -64,19 +64,26 @@ class FoundryDarkSunCalendar {
       config: true,
       type: Number,
       default: 190,
+      range: { min: 1, max: 1000, step: 1 },
       onChange: (value) => {
-        this.settings.kingsAge = game.settings.get(
-          "dark-sun-calendar",
-          "kingsAge"
-        );
-        this.settings.yearInAge = game.settings.get(
-          "dark-sun-calendar",
-          "yearInAge"
-        );
-        this.settings.dayOfYear = game.settings.get(
-          "dark-sun-calendar",
-          "dayOfYear"
-        );
+        let kingsAge = game.settings.get("dark-sun-calendar", "kingsAge");
+        if (typeof kingsAge !== "number" || kingsAge < 1) {
+          kingsAge = 190;
+          game.settings.set("dark-sun-calendar", "kingsAge", 190);
+        }
+        let yearInAge = game.settings.get("dark-sun-calendar", "yearInAge");
+        if (typeof yearInAge !== "number" || yearInAge < 1 || yearInAge > 77) {
+          yearInAge = 1;
+          game.settings.set("dark-sun-calendar", "yearInAge", 1);
+        }
+        let dayOfYear = game.settings.get("dark-sun-calendar", "dayOfYear");
+        if (typeof dayOfYear !== "number" || dayOfYear < 1 || dayOfYear > 375) {
+          dayOfYear = 1;
+          game.settings.set("dark-sun-calendar", "dayOfYear", 1);
+        }
+        this.settings.kingsAge = kingsAge;
+        this.settings.yearInAge = yearInAge;
+        this.settings.dayOfYear = dayOfYear;
         this.updateDate();
       },
     });
@@ -90,43 +97,55 @@ class FoundryDarkSunCalendar {
       default: 26,
       range: { min: 1, max: 77, step: 1 },
       onChange: (value) => {
-        this.settings.kingsAge = game.settings.get(
-          "dark-sun-calendar",
-          "kingsAge"
-        );
-        this.settings.yearInAge = game.settings.get(
-          "dark-sun-calendar",
-          "yearInAge"
-        );
-        this.settings.dayOfYear = game.settings.get(
-          "dark-sun-calendar",
-          "dayOfYear"
-        );
+        let kingsAge = game.settings.get("dark-sun-calendar", "kingsAge");
+        if (typeof kingsAge !== "number" || kingsAge < 1) {
+          kingsAge = 190;
+          game.settings.set("dark-sun-calendar", "kingsAge", 190);
+        }
+        let yearInAge = game.settings.get("dark-sun-calendar", "yearInAge");
+        if (typeof yearInAge !== "number" || yearInAge < 1 || yearInAge > 77) {
+          yearInAge = 26;
+          game.settings.set("dark-sun-calendar", "yearInAge", 26);
+        }
+        let dayOfYear = game.settings.get("dark-sun-calendar", "dayOfYear");
+        if (typeof dayOfYear !== "number" || dayOfYear < 1 || dayOfYear > 375) {
+          dayOfYear = 1;
+          game.settings.set("dark-sun-calendar", "dayOfYear", 1);
+        }
+        this.settings.kingsAge = kingsAge;
+        this.settings.yearInAge = yearInAge;
+        this.settings.dayOfYear = dayOfYear;
         this.updateDate();
       },
     });
 
     game.settings.register("dark-sun-calendar", "dayOfYear", {
       name: "Current Day of Year",
-      hint: "The current day of the Athasian year (1-375)",
+      hint: "The current day within the year (1-375)",
       scope: "world",
       config: true,
       type: Number,
       default: 1,
       range: { min: 1, max: 375, step: 1 },
       onChange: (value) => {
-        this.settings.kingsAge = game.settings.get(
-          "dark-sun-calendar",
-          "kingsAge"
-        );
-        this.settings.yearInAge = game.settings.get(
-          "dark-sun-calendar",
-          "yearInAge"
-        );
-        this.settings.dayOfYear = game.settings.get(
-          "dark-sun-calendar",
-          "dayOfYear"
-        );
+        let kingsAge = game.settings.get("dark-sun-calendar", "kingsAge");
+        if (typeof kingsAge !== "number" || kingsAge < 1) {
+          kingsAge = 190;
+          game.settings.set("dark-sun-calendar", "kingsAge", 190);
+        }
+        let yearInAge = game.settings.get("dark-sun-calendar", "yearInAge");
+        if (typeof yearInAge !== "number" || yearInAge < 1 || yearInAge > 77) {
+          yearInAge = 26;
+          game.settings.set("dark-sun-calendar", "yearInAge", 26);
+        }
+        let dayOfYear = game.settings.get("dark-sun-calendar", "dayOfYear");
+        if (typeof dayOfYear !== "number" || dayOfYear < 1 || dayOfYear > 375) {
+          dayOfYear = 1;
+          game.settings.set("dark-sun-calendar", "dayOfYear", 1);
+        }
+        this.settings.kingsAge = kingsAge;
+        this.settings.yearInAge = yearInAge;
+        this.settings.dayOfYear = dayOfYear;
         this.updateDate();
       },
     });
@@ -198,6 +217,31 @@ class FoundryDarkSunCalendar {
       ),
     };
 
+    // Validate settings
+    if (
+      typeof this.settings.kingsAge !== "number" ||
+      this.settings.kingsAge < 1
+    ) {
+      this.settings.kingsAge = 190;
+      game.settings.set("dark-sun-calendar", "kingsAge", 190);
+    }
+    if (
+      typeof this.settings.yearInAge !== "number" ||
+      this.settings.yearInAge < 1 ||
+      this.settings.yearInAge > 77
+    ) {
+      this.settings.yearInAge = 26;
+      game.settings.set("dark-sun-calendar", "yearInAge", 26);
+    }
+    if (
+      typeof this.settings.dayOfYear !== "number" ||
+      this.settings.dayOfYear < 1 ||
+      this.settings.dayOfYear > 375
+    ) {
+      this.settings.dayOfYear = 1;
+      game.settings.set("dark-sun-calendar", "dayOfYear", 1);
+    }
+
     // Update calendar with current settings
     this.updateDate();
   }
@@ -212,7 +256,7 @@ class FoundryDarkSunCalendar {
     const current = this.calendar.getCurrentDate();
     if (
       this.settings.kingsAge === current.kingsAge &&
-      this.settings.yearInAge === current.year &&
+      this.settings.yearInAge === current.yearInAge &&
       this.settings.dayOfYear === current.dayOfYear
     ) {
       return; // No change needed
@@ -229,7 +273,7 @@ class FoundryDarkSunCalendar {
     const updated = this.calendar.getCurrentDate();
     if (updated.kingsAge !== this.settings.kingsAge) {
       console.warn(
-        `Dark Sun Calendar: King's Age mismatch. Settings: ${this.settings.kingsAge}, Calendar: ${updated.kingsAge}. Correcting...`
+        `Dark Sun Calendar: Kings Age mismatch. Settings: ${this.settings.kingsAge}, Calendar: ${updated.kingsAge}. Correcting...`
       );
       this.calendar.setDate(
         this.settings.kingsAge,
@@ -270,6 +314,41 @@ class FoundryDarkSunCalendar {
    * Actions to perform when Foundry is ready
    */
   onReady() {
+    // Validate loaded settings to prevent RangeErrors
+    const validateAndCorrectSettings = async () => {
+      let changed = false;
+      if (
+        typeof this.settings.kingsAge !== "number" ||
+        this.settings.kingsAge < 1
+      ) {
+        this.settings.kingsAge = 190;
+        await game.settings.set("dark-sun-calendar", "kingsAge", 190);
+        changed = true;
+      }
+      if (
+        typeof this.settings.yearInAge !== "number" ||
+        this.settings.yearInAge < 1 ||
+        this.settings.yearInAge > 77
+      ) {
+        this.settings.yearInAge = 26;
+        await game.settings.set("dark-sun-calendar", "yearInAge", 26);
+        changed = true;
+      }
+      if (
+        typeof this.settings.dayOfYear !== "number" ||
+        this.settings.dayOfYear < 1 ||
+        this.settings.dayOfYear > 375
+      ) {
+        this.settings.dayOfYear = 1;
+        await game.settings.set("dark-sun-calendar", "dayOfYear", 1);
+        changed = true;
+      }
+      if (changed) {
+        this.updateDate();
+      }
+    };
+    validateAndCorrectSettings();
+
     // Check for eclipses on startup
     if (this.settings.showEclipses) {
       this.checkForEclipses();
@@ -288,15 +367,9 @@ class FoundryDarkSunCalendar {
       getCurrentDate: () => this.calendar.getCurrentDate(),
 
       // Date setting functions
-      setKingsAge: async (age) => {
-        await game.settings.set("dark-sun-calendar", "kingsAge", age);
-        this.settings.kingsAge = age;
-        this.updateDate();
-      },
-
-      setYearInAge: async (year) => {
-        await game.settings.set("dark-sun-calendar", "yearInAge", year);
-        this.settings.yearInAge = year;
+      setAbsoluteYear: async (year) => {
+        await game.settings.set("dark-sun-calendar", "absoluteYear", year);
+        this.settings.absoluteYear = year;
         this.updateDate();
       },
 
@@ -332,7 +405,7 @@ class FoundryDarkSunCalendar {
         await game.settings.set(
           "dark-sun-calendar",
           "yearInAge",
-          currentDate.year
+          currentDate.yearInAge
         );
         await game.settings.set(
           "dark-sun-calendar",
@@ -342,26 +415,19 @@ class FoundryDarkSunCalendar {
 
         // Update internal settings
         this.settings.kingsAge = currentDate.kingsAge;
-        this.settings.yearInAge = currentDate.year;
+        this.settings.yearInAge = currentDate.yearInAge;
         this.settings.dayOfYear = currentDate.dayOfYear;
 
         // Update the calendar's internal state to match the new date
         this.calendar.setDate(
           currentDate.kingsAge,
-          currentDate.year,
+          currentDate.yearInAge,
           currentDate.dayOfYear
         );
 
         // Sync to Seasons & Stars if integration is enabled
         if (this.seasonsStarsIntegration && this.settings.seasonsStarsSync) {
-          try {
-            await this.seasonsStarsIntegration.syncToSeasonsStars();
-          } catch (error) {
-            console.warn(
-              "Dark Sun Calendar: Failed to sync to Seasons & Stars:",
-              error
-            );
-          }
+          await this.seasonsStarsIntegration.syncToSeasonsStars(currentDate);
         }
 
         // Check for eclipses after advancement
@@ -488,26 +554,9 @@ class FoundryDarkSunCalendar {
         this.sendChatMessage(`
                     <div class="dark-sun-chat">
                         <h3>Current Athasian Date</h3>
-                        <p><strong>King's Age:</strong> ${
-                          currentDate.kingsAge
-                        }</p>
-                        <p><strong>Year:</strong> ${currentDate.year} (${
-          currentDate.yearName
-        })</p>
-                        <p><strong>Day:</strong> ${currentDate.dayOfYear}</p>
-                        ${
-                          currentDate.monthName
-                            ? `<p><strong>Month:</strong> ${currentDate.monthName}, Day ${currentDate.dayInMonth}</p>`
-                            : ""
-                        }
-                        ${
-                          currentDate.intercalaryName
-                            ? `<p><strong>Intercalary:</strong> ${currentDate.intercalaryName}, Day ${currentDate.dayInIntercalary}</p>`
-                            : ""
-                        }
-                        <p><strong>Season:</strong> ${
-                          currentDate.season.name
-                        }</p>
+                        <p><strong>Kings Age:</strong> ${currentDate.kingsAge}</p>
+                        <p><strong>Year in Age:</strong> ${currentDate.yearInAge}</p>
+                        <p><strong>Day of Year:</strong> ${currentDate.dayOfYear}</p>
                     </div>
                 `);
         break;

@@ -85,7 +85,7 @@ class DarkSunCalendarApp extends foundry.applications.api.ApplicationV2 {
         <h2>📅 ${currentDate.yearName}</h2>
         <p><strong>King's Age:</strong> ${
           currentDate.kingsAge
-        }, <strong>Year:</strong> ${currentDate.year}</p>
+        }, <strong>Year:</strong> ${currentDate.yearInAge}</p>
         <p><strong>Day:</strong> ${currentDate.dayOfYear} of 375</p>
         ${
           currentDate.monthName

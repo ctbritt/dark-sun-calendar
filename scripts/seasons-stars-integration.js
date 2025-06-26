@@ -160,25 +160,26 @@ class SeasonsStarsIntegration {
       // Extract date components from Seasons & Stars format
       const { year, month, day } = this.parseSeasonsStarsDate(seasonsStarsDate);
 
-      // Calculate King's Age and year within age using new epoch
-      const kingsAge = Math.floor((year - 1) / 77) + 190;
-      const yearInAge = ((year - 1) % 77) + 1;
+      // Use S&S year as yearInAge, keep current kingsAge from DSC
+      const yearInAge = typeof year === "number" ? year : 1;
+      const currentDSCDate = this.darkSunCalendar.getCurrentDate();
+      const kingsAge = currentDSCDate.kingsAge;
 
-      // Calculate day of year from month and day
-      const dayOfYear = this.calculateDayOfYear(month, day);
-
-      // Guard: If current DSC date is intercalary and incoming SaS date is not, ignore update
-      const dscCurrent = this.darkSunCalendar.getCurrentDate();
+      // Guard: If current DSC date is intercalary and incoming S&S date is not, ignore update
       const isDSCIntercalary =
-        dscCurrent.intercalary !== null && dscCurrent.intercalary !== undefined;
-      // SaS never sends intercalary, so if month is defined, it's not intercalary
-      const isSaSIntercalary = false;
-      if (isDSCIntercalary && !isSaSIntercalary) {
+        currentDSCDate.intercalary !== null &&
+        currentDSCDate.intercalary !== undefined;
+      // S&S never sends intercalary, so if month is defined, it's not intercalary
+      const isSSIntercalary = false;
+      if (isDSCIntercalary && !isSSIntercalary) {
         console.warn(
-          "SaS tried to overwrite an intercalary day with a non-intercalary date. Ignoring."
+          "S&S tried to overwrite an intercalary day with a non-intercalary date. Ignoring."
         );
         return;
       }
+
+      // Calculate day of year from month and day
+      const dayOfYear = this.calculateDayOfYear(month, day);
 
       // Update our calendar
       this.darkSunCalendar.setDate(kingsAge, yearInAge, dayOfYear);
@@ -226,19 +227,38 @@ class SeasonsStarsIntegration {
   }
 
   /**
+   * Check if the integration is enabled and ready
+   */
+  isEnabled() {
+    return this.isInitialized && this.syncEnabled && this.seasonsStarsAPI;
+  }
+
+  /**
    * Sync Dark Sun Calendar to Seasons & Stars
    */
-  async syncToSeasonsStars() {
-    if (!this.seasonsStarsAPI || !this.syncEnabled) return;
-
+  async syncToSeasonsStars(darkSunDate) {
     try {
-      const currentDate = this.darkSunCalendar.getCurrentDate();
+      if (!this.isEnabled()) {
+        return;
+      }
 
-      // Convert to Seasons & Stars format
-      const seasonsStarsDate = this.convertToSeasonsStarsFormat(currentDate);
+      const ssFormat = this.convertToSeasonsStarsFormat(darkSunDate);
+      if (!ssFormat) {
+        console.warn("Dark Sun Calendar: Failed to convert date for S&S sync");
+        return;
+      }
 
-      // Update Seasons & Stars
-      await this.seasonsStarsAPI.setCurrentDate(seasonsStarsDate);
+      // Create the date object that S&S expects
+      const dateData = {
+        year: ssFormat.year,
+        month: ssFormat.month,
+        day: ssFormat.day,
+        weekday: 0, // Will be calculated by S&S
+        time: { hour: 0, minute: 0, second: 0 },
+      };
+
+      // Set the date in S&S using the API
+      await this.seasonsStarsAPI.setCurrentDate(dateData);
     } catch (error) {
       console.error(
         "Dark Sun Calendar: Error syncing to Seasons & Stars:",
@@ -270,24 +290,36 @@ class SeasonsStarsIntegration {
    * Convert Dark Sun date to Seasons & Stars format
    */
   convertToSeasonsStarsFormat(darkSunDate) {
-    // Use new epoch: Y1 in S&S = KA 190, Y1 in Dark Sun
-    const totalYears = (darkSunDate.kingsAge - 190) * 77 + darkSunDate.year;
+    try {
+      // Only convert day of year to month and day, keep S&S year as is
+      let month = 1;
+      let day = 1;
 
-    let month = 1;
-    let day = 1;
+      // Convert day of year to month and day
+      if (darkSunDate.dayOfYear && darkSunDate.dayOfYear > 0) {
+        const monthInfo = window.AthasianCalendarCore.resolveMonthAndDay(
+          darkSunDate.dayOfYear
+        );
+        if (monthInfo.month) {
+          month = monthInfo.month;
+          day = monthInfo.dayInMonth;
+        }
+      }
 
-    if (darkSunDate.month) {
-      month = darkSunDate.month;
-      day = darkSunDate.dayInMonth;
+      return {
+        year: darkSunDate.yearInAge, // Use yearInAge as S&S year
+        month: month,
+        day: day,
+        // Add any additional Seasons & Stars specific properties
+        calendarId: this.calendarId,
+      };
+    } catch (error) {
+      console.error(
+        "Dark Sun Calendar: Error converting to Seasons & Stars format:",
+        error
+      );
+      return null;
     }
-
-    return {
-      year: totalYears,
-      month: month,
-      day: day,
-      // Add any additional Seasons & Stars specific properties
-      calendarId: this.calendarId,
-    };
   }
 
   /**
