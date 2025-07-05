@@ -1,0 +1,24 @@
+{
+    "DARK_SUN_CALENDAR": {
+        "name": "Dark Sun Calendar",
+        "description": "Athasian Calendar (Dark Sun)",
+        "settings": {
+            "title": "Dark Sun Calendar Settings",
+            "description": "Configure Dark Sun Calendar options"
+        },
+        "seasons": {
+            "high_sun": "High Sun",
+            "sun_descending": "Sun Descending",
+            "sun_ascending": "Sun Ascending"
+        },
+        "intercalary": {
+            "cooling_sun": "Cooling Sun",
+            "soaring_sun": "Soaring Sun",
+            "highest_sun": "Highest Sun"
+        },
+        "moons": {
+            "ral": "Ral",
+            "guthay": "Guthay"
+        }
+    }
+}

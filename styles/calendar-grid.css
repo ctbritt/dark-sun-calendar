@@ -1,0 +1,399 @@
+/* Dark Sun Calendar Grid Widget Styles */
+
+.calendar-grid-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 10px;
+    background: var(--color-bg-app, #f8f8f8);
+    border-radius: 5px;
+}
+
+/* Error State */
+.error-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    color: var(--color-error, #d63384);
+    background: var(--color-bg-error, #f8d7da);
+    border: 1px solid var(--color-border-error, #f5c6cb);
+    border-radius: 4px;
+    margin: 10px 0;
+}
+
+.error-state i {
+    margin-right: 8px;
+    font-size: 16px;
+}
+
+/* Calendar Header */
+.calendar-grid-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding: 10px;
+    background: var(--color-bg-secondary, #ffffff);
+    border: 1px solid var(--color-border-light, #ddd);
+    border-radius: 4px;
+}
+
+.navigation-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.month-navigation,
+.year-navigation {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.nav-button {
+    background: var(--color-bg-btn, #f0f0f0);
+    border: 1px solid var(--color-border-dark, #999);
+    border-radius: 3px;
+    padding: 4px 8px;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--color-text-primary, #000);
+    transition: background-color 0.15s ease;
+}
+
+.nav-button:hover {
+    background: var(--color-bg-btn-hover, #e0e0e0);
+}
+
+.month-info {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    min-width: 120px;
+    justify-content: center;
+}
+
+.month-name {
+    font-weight: bold;
+    font-size: 14px;
+    color: var(--color-text-primary, #000);
+}
+
+.month-description {
+    color: var(--color-text-secondary, #666);
+    cursor: help;
+}
+
+.year-display {
+    background: var(--color-bg-btn, #f0f0f0);
+    border: 1px solid var(--color-border-dark, #999);
+    border-radius: 3px;
+    padding: 4px 8px;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--color-text-primary, #000);
+    transition: background-color 0.15s ease;
+    min-width: 60px;
+    text-align: center;
+}
+
+.year-display:hover {
+    background: var(--color-bg-btn-hover, #e0e0e0);
+}
+
+.header-actions {
+    display: flex;
+    gap: 5px;
+}
+
+.today-button {
+    background: var(--color-bg-btn, #f0f0f0);
+    border: 1px solid var(--color-border-dark, #999);
+    border-radius: 3px;
+    padding: 4px 8px;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--color-text-primary, #000);
+    transition: background-color 0.15s ease;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.today-button:hover {
+    background: var(--color-bg-btn-hover, #e0e0e0);
+}
+
+/* Weekday Headers */
+.weekday-headers {
+    display: grid;
+    grid-template-columns: repeat(var(--weekday-count, 7), 1fr);
+    gap: 2px;
+    margin-bottom: 5px;
+}
+
+.weekday-header {
+    text-align: center;
+    padding: 8px 4px;
+    background: var(--color-bg-secondary, #ffffff);
+    border: 1px solid var(--color-border-light, #ddd);
+    border-radius: 3px;
+    font-weight: bold;
+    font-size: 12px;
+    color: var(--color-text-primary, #000);
+}
+
+/* Calendar Grid */
+.calendar-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+}
+
+.calendar-week {
+    display: grid;
+    grid-template-columns: repeat(var(--weekday-count, 7), 1fr);
+    gap: 2px;
+    min-height: 40px;
+}
+
+.calendar-day {
+    position: relative;
+    background: var(--color-bg-secondary, #ffffff);
+    border: 1px solid var(--color-border-light, #ddd);
+    border-radius: 3px;
+    padding: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 35px;
+}
+
+.calendar-day:hover {
+    background: var(--color-bg-btn-hover, #e0e0e0);
+    border-color: var(--color-border-dark, #999);
+}
+
+.calendar-day.empty {
+    background: var(--color-bg-disabled, #f5f5f5);
+    border-color: var(--color-border-light, #ddd);
+    cursor: default;
+}
+
+.calendar-day.today {
+    background: var(--color-primary, #4a90e2);
+    color: white;
+    border-color: var(--color-primary, #4a90e2);
+    font-weight: bold;
+}
+
+.calendar-day.view-date {
+    border-color: var(--color-secondary, #ff6b35);
+    border-width: 2px;
+}
+
+.calendar-day.has-notes {
+    background: var(--color-bg-highlight, #fff3cd);
+    border-color: var(--color-warning, #ffc107);
+}
+
+.calendar-day.has-notes.general {
+    background: var(--color-bg-highlight, #fff3cd);
+    border-color: var(--color-warning, #ffc107);
+}
+
+.calendar-day.has-notes.event {
+    background: var(--color-bg-success, #d4edda);
+    border-color: var(--color-success, #28a745);
+}
+
+.calendar-day.has-notes.weather {
+    background: var(--color-bg-info, #d1ecf1);
+    border-color: var(--color-info, #17a2b8);
+}
+
+.calendar-day.has-notes.encounter {
+    background: var(--color-bg-danger, #f8d7da);
+    border-color: var(--color-danger, #dc3545);
+}
+
+.day-number {
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1;
+}
+
+.calendar-day.today .day-number {
+    color: white;
+}
+
+/* Note Indicators */
+.note-indicator {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-size: 10px;
+    color: inherit;
+    transition: transform 0.15s ease;
+}
+
+.note-indicator:hover {
+    transform: scale(1.1);
+}
+
+.note-count {
+    display: inline-block;
+    background: var(--color-primary, #4a90e2);
+    color: white;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    line-height: 16px;
+    text-align: center;
+    font-size: 10px;
+    font-weight: bold;
+}
+
+.note-count.general {
+    background: var(--color-warning, #ffc107);
+}
+
+.note-count.event {
+    background: var(--color-success, #28a745);
+}
+
+.note-count.weather {
+    background: var(--color-info, #17a2b8);
+}
+
+.note-count.encounter {
+    background: var(--color-danger, #dc3545);
+}
+
+.note-indicator i {
+    color: var(--color-primary, #4a90e2);
+}
+
+.note-indicator i.general {
+    color: var(--color-warning, #ffc107);
+}
+
+.note-indicator i.event {
+    color: var(--color-success, #28a745);
+}
+
+.note-indicator i.weather {
+    color: var(--color-info, #17a2b8);
+}
+
+.note-indicator i.encounter {
+    color: var(--color-danger, #dc3545);
+}
+
+/* Quick Note Button */
+.quick-note-btn {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    background: var(--color-success, #28a745);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    line-height: 16px;
+    text-align: center;
+    cursor: pointer;
+    font-size: 8px;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+
+.calendar-day:hover .quick-note-btn {
+    opacity: 1;
+}
+
+.quick-note-btn:hover {
+    background: var(--color-success-dark, #1e7e34);
+}
+
+/* Calendar Footer */
+.calendar-grid-footer {
+    margin-top: 10px;
+    padding: 8px;
+    background: var(--color-bg-secondary, #ffffff);
+    border: 1px solid var(--color-border-light, #ddd);
+    border-radius: 4px;
+    font-size: 12px;
+    color: var(--color-text-secondary, #666);
+}
+
+.gm-instructions,
+.player-instructions {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 5px;
+}
+
+.month-description-full {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-style: italic;
+}
+
+/* Grid Widget Sidebar Buttons */
+.grid-sidebar-button {
+    background: var(--color-bg-btn, #f0f0f0);
+    border: 1px solid var(--color-border-dark, #999);
+    border-radius: 3px;
+    padding: 4px 6px;
+    margin-left: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--color-text-primary, #000);
+    transition: background-color 0.15s ease;
+}
+
+.grid-sidebar-button:hover {
+    background: var(--color-bg-btn-hover, #e0e0e0);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .calendar-grid-header {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .navigation-controls {
+        flex-direction: row;
+        gap: 15px;
+    }
+    
+    .month-navigation,
+    .year-navigation {
+        flex-direction: column;
+        gap: 4px;
+    }
+    
+    .calendar-day {
+        min-height: 30px;
+        padding: 2px;
+    }
+    
+    .day-number {
+        font-size: 12px;
+    }
+} 

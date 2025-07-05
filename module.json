@@ -4,27 +4,22 @@
     "description": "Complete Athasian calendar system with King's Ages, lunar cycles, and historical events for the Dark Sun campaign setting",
     "authors": [
         {
-            "name": "Dark Sun Calendar",
-            "email": "darksun@calendar.com"
+            "name": "Christopher Allbritton",
+            "url": "https://github.com/ctbritt"
         }
     ],
-    "version": "2.0.0",
+    "version": "13.0.0",
     "compatibility": {
         "minimum": "13",
-        "verified": "13.345",
-        "maximum": "13"
+        "verified": "13"
     },
     "esmodules": [
-        "scripts/athasian-calendar-core.js",
-        "scripts/athasian-moon-engine.js",
-        "scripts/athasian-eclipse-engine.js",
-        "scripts/dark-sun-calendar.js",
-        "scripts/seasons-stars-integration.js",
-        "scripts/dark-sun-calendar-app.js",
-        "scripts/foundry-integration.js"
+        "scripts/ds-calendar-date.js",
+        "scripts/calendar-grid.js",
+        "scripts/main.js"
     ],
     "styles": [
-        "styles/dark-sun-calendar.css"
+        "styles/calendar-grid.css"
     ],
     "languages": [
         {
@@ -33,14 +28,21 @@
             "path": "lang/en.json"
         }
     ],
-    "url": "https://github.com/darksun-calendar/foundryvtt-dark-sun-calendar",
-    "manifest": "https://github.com/darksun-calendar/foundryvtt-dark-sun-calendar/releases/latest/download/module.json",
-    "download": "https://github.com/darksun-calendar/foundryvtt-dark-sun-calendar/releases/latest/download/dark-sun-calendar.zip",
     "relationships": {
         "systems": [
             {
                 "id": "dnd5e",
-                "type": "optional"
+                "type": "system",
+                "compatibility": {
+                    "minimum": "5",
+                    "maximum": "6"
+                }
+            }
+        ],
+        "requires": [
+            {
+                "id": "seasons-and-stars",
+                "type": "module"
             }
         ]
     }
