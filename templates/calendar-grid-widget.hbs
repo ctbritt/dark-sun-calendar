@@ -41,7 +41,7 @@
 
             <div class="dsc-header-actions">
                 <button type="button" class="dsc-btn dsc-btn-today" data-action="goToToday" title="Go to current date">
-                    <i class="fas fa-crosshairs"></i> Today
+                    <i class="fas fa-calendar-check"></i>
                 </button>
             </div>
         </div>
@@ -60,8 +60,13 @@
             {{#each monthData.weeks as |week|}}
             {{#if (and (lookup week 0) (lookup (lookup week 0) 'isIntercalary'))}}
             <div class="dsc-intercalary-label-row">
-                <div class="dsc-intercalary-label" style="grid-column: span {{../weekdays.length}};">
+                <div class="dsc-intercalary-label" style="grid-column: span {{../weekdays.length}};" {{#if (lookup
+                    (lookup week 0) 'intercalaryDescription' )}}
+                    title="{{lookup (lookup week 0) 'intercalaryDescription'}}" {{/if}}>
                     {{lookup (lookup week 0) 'intercalaryName'}}
+                    {{#if (lookup (lookup week 0) 'intercalaryDescription')}}
+                    <i class="fas fa-info-circle"></i>
+                    {{/if}}
                 </div>
             </div>
             <div class="dsc-intercalary-row">
@@ -86,15 +91,30 @@
                 {{#if isEmpty}}
                 <div class="dsc-day dsc-day-empty"></div>
                 {{else}}
-                <div class="dsc-day {{#if isToday}}dsc-day-today{{/if}} {{#if isViewDate}}dsc-day-view{{/if}} {{#if hasNotes}}dsc-day-notes-{{primaryCategory}}{{/if}}"
+                <div class="dsc-day {{#if isToday}}dsc-day-today{{/if}} {{#if isViewDate}}dsc-day-view{{/if}} {{#if hasNotes}}dsc-day-notes-{{primaryCategory}}{{/if}} {{#if hasMajorCelestialEvent}}dsc-day-eclipse dsc-eclipse-{{eclipseInfo.type}}{{/if}}"
                     data-action="selectDate" data-day="{{day}}" data-date="{{date.year}}-{{date.month}}-{{date.day}}"
                     data-category="{{primaryCategory}}"
-                    title="{{#if isToday}}Current Date: {{/if}}{{date.year}}-{{date.month}}-{{date.day}}{{#if hasNotes}} - {{noteCount}} note(s){{/if}}{{#if moonTooltip}} - {{moonTooltip}}{{/if}} (Click to {{#if isGM}}set date{{else}}view details{{/if}})">
+                    title="{{#if isToday}}Current Date: {{/if}}{{date.year}}-{{date.month}}-{{date.day}}{{#if hasNotes}} - {{noteCount}} note(s){{/if}}{{#if hasMajorCelestialEvent}} - {{eclipseInfo.description}}{{/if}}{{#if moonTooltip}} - {{moonTooltip}}{{/if}} (Click to {{#if isGM}}set date{{else}}view details{{/if}})">
                     <span class="dsc-day-number">{{day}}</span>
+
+                    {{#if hasMajorCelestialEvent}}
+                    <div class="dsc-eclipse-indicator dsc-eclipse-{{eclipseInfo.type}}"
+                        title="{{eclipseInfo.description}}">
+                        {{#if (eq eclipseInfo.type "grand")}}
+                        <i class="fas fa-star"></i>
+                        {{else if (eq eclipseInfo.type "total")}}
+                        <i class="fas fa-circle"></i>
+                        {{else if (eq eclipseInfo.type "partial")}}
+                        <i class="fas fa-circle-notch"></i>
+                        {{/if}}
+                    </div>
+                    {{/if}}
+
                     {{#if moonPhases}}
                     <div class="dsc-moon-container" title="{{moonTooltip}}">
                         {{#each moonPhases}}
-                        <div class="dsc-moon" style="color: {{moonColor}}" title="{{moonName}}: {{phaseName}}">
+                        <div class="dsc-moon" style="color: {{moonColor}}"
+                            title="{{moonName}}: {{phaseName}} ({{illumination}}%)">
                             {{#if (eq phaseIcon "new")}}<i class="fas fa-circle dsc-moon-new"></i>{{/if}}
                             {{#if (eq phaseIcon "waxing-crescent")}}<i
                                 class="fas fa-moon dsc-moon-waxing-crescent"></i>{{/if}}

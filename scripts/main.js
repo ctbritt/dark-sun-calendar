@@ -69,6 +69,9 @@ class DarkSunCalendar {
             }
         }
         
+        // Initialize Athasian Moon System
+        await this.initializeMoonSystem();
+        
         // Setup integration
         this.setupIntegration();
         
@@ -121,6 +124,72 @@ class DarkSunCalendar {
                 ui.notifications?.error('No Dark Sun calendar configuration found. Please check your installation.');
                 throw new Error('No Dark Sun calendar configuration available');
             }
+        }
+    }
+
+    /**
+     * Initialize the Athasian Moon System
+     */
+    async initializeMoonSystem() {
+        console.log('🌞 Dark Sun Calendar | Initializing Athasian Moon System...');
+        
+        try {
+            // Ensure moon engine classes are available
+            if (!window.AthasianMoonEngine) {
+                throw new Error('AthasianMoonEngine not loaded');
+            }
+            if (!window.AthasianEclipseEngine) {
+                throw new Error('AthasianEclipseEngine not loaded');
+            }
+            if (!window.AthasianCalendarCore) {
+                throw new Error('AthasianCalendarCore not loaded');
+            }
+            
+            // Initialize the moon system
+            this.moonSystem = new window.AthasianMoonEngine.AthasianMoonSystem();
+            
+            // Initialize the eclipse calculator
+            this.eclipseCalculator = new window.AthasianEclipseEngine.EclipseCalculator(this.moonSystem);
+            
+            // Test the systems
+            if (!this.moonSystem.validateSystem()) {
+                throw new Error('Moon system validation failed');
+            }
+            
+            if (!this.eclipseCalculator.validateEclipseSystem()) {
+                throw new Error('Eclipse system validation failed');
+            }
+            
+            // Test date conversion
+            if (!window.AthasianCalendarCore.testConversions()) {
+                throw new Error('Date conversion system validation failed');
+            }
+            
+            console.log('🌞 Dark Sun Calendar | ✅ Athasian Moon System initialized successfully');
+            console.log(`🌞 Dark Sun Calendar | Eclipse cycle: ${this.moonSystem.eclipseCycle} days`);
+            
+            // Log current moon state for verification
+            const currentAbsoluteDay = window.AthasianCalendarCore.getCurrentAbsoluteDay();
+            const currentMoons = this.moonSystem.getBothMoons(currentAbsoluteDay);
+            console.log(`🌞 Dark Sun Calendar | Current moons (Absolute Day ${currentAbsoluteDay}):`, {
+                ral: `${currentMoons.ral.phaseName} (${currentMoons.ral.illumination}%)`,
+                guthay: `${currentMoons.guthay.phaseName} (${currentMoons.guthay.illumination}%)`
+            });
+            
+            const currentEclipse = this.eclipseCalculator.getEclipseInfo(currentAbsoluteDay);
+            if (currentEclipse.type !== 'none') {
+                console.log(`🌞 Dark Sun Calendar | Current eclipse:`, currentEclipse.description);
+            }
+            
+        } catch (error) {
+            console.error('🌞 Dark Sun Calendar | ERROR: Failed to initialize moon system:', error);
+            ui.notifications?.error('Failed to initialize Dark Sun moon system.');
+            
+            // Set fallback null values
+            this.moonSystem = null;
+            this.eclipseCalculator = null;
+            
+            throw error;
         }
     }
 
@@ -470,16 +539,15 @@ class DarkSunCalendar {
 
     /**
      * Get moon phase information for a specific date
-     * Uses the S&S engine with our Dark Sun moon definitions (Ral and Guthay)
+     * Uses the AthasianMoonSystem for precise astronomical calculations
      * @param {Object} date - Date object (optional, uses current date if not provided)
      * @param {string} moonName - Specific moon name (optional, returns all moons if not provided)
      * @returns {Array} Array of moon phase objects with detailed information
      */
     getMoonPhaseInfo(date, moonName) {
         try {
-            const engine = this.seasonsStars?.manager?.getActiveEngine();
-            if (!engine) {
-                console.warn('🌞 Dark Sun Calendar | getMoonPhaseInfo: No engine available');
+            if (!this.moonSystem) {
+                console.warn('🌞 Dark Sun Calendar | getMoonPhaseInfo: Moon system not initialized');
                 return [];
             }
 
@@ -493,38 +561,83 @@ class DarkSunCalendar {
                 }
             }
 
-            // Convert DSCalendarDate to format expected by S&S engine
-            let dateForEngine = targetDate;
-            if (targetDate.toObject && typeof targetDate.toObject === 'function') {
-                dateForEngine = targetDate.toObject();
+            // Convert to absolute days
+            const absoluteDay = window.AthasianCalendarCore.dateToAbsoluteDays(targetDate);
+            
+            // Get moon data from our system
+            const moonData = this.moonSystem.getBothMoons(absoluteDay);
+            
+            // Format as array for compatibility
+            const moonPhaseInfo = [
+                {
+                    moonName: moonData.ral.name,
+                    phaseName: moonData.ral.phaseName,
+                    phaseIcon: this.convertPhaseNameToIcon(moonData.ral.phaseName),
+                    moonColor: '#8de715', // Ral's green color
+                    cycleLength: moonData.ral.period,
+                    illumination: moonData.ral.illumination,
+                    rise: moonData.ral.rise,
+                    set: moonData.ral.set,
+                    riseFormatted: moonData.ral.riseFormatted,
+                    setFormatted: moonData.ral.setFormatted,
+                    // Legacy compatibility fields
+                    dayInPhase: Math.floor(moonData.ral.phase * moonData.ral.period),
+                    daysUntilNext: moonData.ral.period - Math.floor(moonData.ral.phase * moonData.ral.period),
+                    phase: moonData.ral.phase,
+                    description: 'The smaller, green-yellow moon of Athas, companion to Guthay in the hostile sky'
+                },
+                {
+                    moonName: moonData.guthay.name,
+                    phaseName: moonData.guthay.phaseName,
+                    phaseIcon: this.convertPhaseNameToIcon(moonData.guthay.phaseName),
+                    moonColor: '#ffd700', // Guthay's golden color
+                    cycleLength: moonData.guthay.period,
+                    illumination: moonData.guthay.illumination,
+                    rise: moonData.guthay.rise,
+                    set: moonData.guthay.set,
+                    riseFormatted: moonData.guthay.riseFormatted,
+                    setFormatted: moonData.guthay.setFormatted,
+                    // Legacy compatibility fields
+                    dayInPhase: Math.floor(moonData.guthay.phase * moonData.guthay.period),
+                    daysUntilNext: moonData.guthay.period - Math.floor(moonData.guthay.phase * moonData.guthay.period),
+                    phase: moonData.guthay.phase,
+                    description: 'The larger, golden moon of Athas, burning bright in the crimson sky'
+                }
+            ];
+
+            // Filter by moon name if specified
+            if (moonName) {
+                return moonPhaseInfo.filter(info => 
+                    info.moonName.toLowerCase() === moonName.toLowerCase()
+                );
             }
 
-            // Get moon phase info from S&S engine (uses our Dark Sun moons)
-            const moonPhaseInfo = engine.getMoonPhaseInfo(dateForEngine, moonName);
-            if (!moonPhaseInfo || moonPhaseInfo.length === 0) {
-                return [];
-            }
-
-            // Enhance the moon phase info with Dark Sun specific formatting
-            return moonPhaseInfo.map(info => ({
-                moonName: info.moon.name,
-                phaseName: info.phase.name,
-                phaseIcon: info.phase.icon,
-                moonColor: info.moon.color,
-                cycleLength: info.moon.cycleLength,
-                dayInPhase: info.dayInPhase,
-                daysUntilNext: info.daysUntilNext,
-                phaseIndex: info.phaseIndex,
-                // Additional Dark Sun context
-                description: info.moon.translations?.en?.description || '',
-                phase: info.phase,
-                moon: info.moon
-            }));
+            return moonPhaseInfo;
 
         } catch (error) {
             console.error('🌞 Dark Sun Calendar | getMoonPhaseInfo: Error calculating moon phases:', error);
             return [];
         }
+    }
+
+    /**
+     * Convert phase name to icon for compatibility
+     * @param {string} phaseName - Phase name from moon system
+     * @returns {string} Icon name
+     */
+    convertPhaseNameToIcon(phaseName) {
+        const phaseMap = {
+            'Full': 'full',
+            'Waning Gibbous': 'waning-gibbous',
+            'Last Quarter': 'last-quarter',
+            'Waning Crescent': 'waning-crescent',
+            'New': 'new',
+            'Waxing Crescent': 'waxing-crescent',
+            'First Quarter': 'first-quarter',
+            'Waxing Gibbous': 'waxing-gibbous'
+        };
+        
+        return phaseMap[phaseName] || 'full';
     }
 
     /**
@@ -1651,11 +1764,33 @@ window.DSC = {
     getDayOfYear: (date) => darkSunCalendar?.getDayOfYear(date),
     formatDarkSunDate: (date) => darkSunCalendar?.formatDarkSunDate(date),
 
-    // Moon phase methods
+    // Moon phase methods (AthasianMoonSystem)
     getMoonPhaseInfo: (date, moonName) => darkSunCalendar?.getMoonPhaseInfo(date, moonName),
     getRalPhase: (date) => darkSunCalendar?.getRalPhase(date),
     getGuthayPhase: (date) => darkSunCalendar?.getGuthayPhase(date),
     getCurrentMoonPhases: () => darkSunCalendar?.getCurrentMoonPhases(),
+    
+    // Eclipse methods (AthasianEclipseEngine)
+    getEclipseInfo: (date) => {
+        if (!darkSunCalendar?.eclipseCalculator) return null;
+        const absoluteDay = window.AthasianCalendarCore?.dateToAbsoluteDays(date || darkSunCalendar.getCurrentDate());
+        return darkSunCalendar.eclipseCalculator.getEclipseInfo(absoluteDay);
+    },
+    findNextEclipse: (minType = 'partial') => {
+        if (!darkSunCalendar?.eclipseCalculator) return null;
+        const absoluteDay = window.AthasianCalendarCore?.getCurrentAbsoluteDay();
+        return darkSunCalendar.eclipseCalculator.findNextEclipse(absoluteDay, minType);
+    },
+    findPreviousEclipse: (minType = 'partial') => {
+        if (!darkSunCalendar?.eclipseCalculator) return null;
+        const absoluteDay = window.AthasianCalendarCore?.getCurrentAbsoluteDay();
+        return darkSunCalendar.eclipseCalculator.findPreviousEclipse(absoluteDay, minType);
+    },
+    
+    // Date conversion methods
+    toAbsoluteDays: (kingsAge, year, dayOfYear) => window.AthasianCalendarCore?.toAbsoluteDays(kingsAge, year, dayOfYear),
+    fromAbsoluteDays: (absoluteDays) => window.AthasianCalendarCore?.fromAbsoluteDays(absoluteDays),
+    getCurrentAbsoluteDay: () => window.AthasianCalendarCore?.getCurrentAbsoluteDay(),
     formatMoonPhase: (moonPhase) => darkSunCalendar?.formatMoonPhase(moonPhase),
     getMoonPhaseSummary: (date) => darkSunCalendar?.getMoonPhaseSummary(date),
     isNewMoon: (date) => darkSunCalendar?.isNewMoon(date),

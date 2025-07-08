@@ -276,55 +276,83 @@ class DarkSunCalendarGridWidget extends foundry.applications.api.HandlebarsAppli
                 noteTooltip = `${noteCount} note(s) (${noteData.primaryCategory}):\n${notesList}`;
             }
             
-            // Calculate moon phases for this day
+            // Calculate moon phases and eclipse info for this day
             let moonPhases = [];
             let primaryMoonPhase;
             let primaryMoonColor;
             let moonTooltip = '';
             let hasMultipleMoons = false;
+            let eclipseInfo = null;
+            let hasMajorCelestialEvent = false;
+            
             try {
-                // Convert DSCalendarDate to plain object for engine compatibility
-                const engineDate = dayDate.toObject ? dayDate.toObject() : dayDate;
-                console.debug('🌞 DSC: Calculating moon phases for date:', engineDate);
-                
-                const moonPhaseInfo = engine.getMoonPhaseInfo?.(engineDate);
-                console.debug('🌞 DSC: Moon phase info result:', moonPhaseInfo);
-                
-                if (moonPhaseInfo && moonPhaseInfo.length > 0) {
-                    moonPhases = moonPhaseInfo.map(info => ({
-                        moonName: info.moon.name,
-                        phaseName: info.phase.name,
-                        phaseIcon: info.phase.icon,
-                        moonColor: info.moon.color,
-                        dayInPhase: info.dayInPhase,
-                        daysUntilNext: info.daysUntilNext,
-                    }));
-                    // Set primary moon (first moon) for simple display
-                    const primaryMoon = moonPhaseInfo[0];
-                    primaryMoonPhase = primaryMoon.phase.icon;
-                    primaryMoonColor = primaryMoon.moon.color;
-                    hasMultipleMoons = moonPhaseInfo.length > 1;
+                // Get the Dark Sun Calendar instance
+                const darkSunCalendar = window.darkSunCalendar;
+                if (!darkSunCalendar?.moonSystem || !darkSunCalendar?.eclipseCalculator) {
+                    console.debug('🌞 DSC: Moon system not available, skipping moon calculations');
+                } else {
+                    // Convert to absolute days for our moon system
+                    const absoluteDay = window.AthasianCalendarCore.dateToAbsoluteDays(dayDate);
                     
-                    console.debug('🌞 DSC: Primary moon phase:', primaryMoonPhase, 'Color:', primaryMoonColor);
+                    // Check for eclipse (major celestial event)
+                    eclipseInfo = darkSunCalendar.eclipseCalculator.getEclipseInfo(absoluteDay);
+                    hasMajorCelestialEvent = eclipseInfo.type !== 'none';
                     
-                    // Create moon tooltip
-                    if (moonPhaseInfo.length === 1) {
-                        const moon = moonPhaseInfo[0];
-                        moonTooltip = `${moon.moon.name}: ${moon.phase.name}`;
-                        if (moon.daysUntilNext > 0) {
-                            moonTooltip += ` (${moon.daysUntilNext} days until next phase)`;
+                    // Show moon phases only for view date or major celestial events
+                    const shouldShowMoons = isViewDate || hasMajorCelestialEvent;
+                    
+                    if (shouldShowMoons) {
+                        console.debug('🌞 DSC: Calculating moons for date (view date or eclipse):', dayDate);
+                        
+                        // Get moon data from our system
+                        const moonData = darkSunCalendar.moonSystem.getBothMoons(absoluteDay);
+                        
+                        moonPhases = [
+                            {
+                                moonName: moonData.ral.name,
+                                phaseName: moonData.ral.phaseName,
+                                phaseIcon: darkSunCalendar.convertPhaseNameToIcon(moonData.ral.phaseName),
+                                moonColor: '#8de715', // Ral's green color
+                                illumination: moonData.ral.illumination,
+                                rise: moonData.ral.riseFormatted,
+                                set: moonData.ral.setFormatted,
+                                dayInPhase: Math.floor(moonData.ral.phase * moonData.ral.period),
+                                daysUntilNext: moonData.ral.period - Math.floor(moonData.ral.phase * moonData.ral.period),
+                            },
+                            {
+                                moonName: moonData.guthay.name,
+                                phaseName: moonData.guthay.phaseName,
+                                phaseIcon: darkSunCalendar.convertPhaseNameToIcon(moonData.guthay.phaseName),
+                                moonColor: '#ffd700', // Guthay's golden color
+                                illumination: moonData.guthay.illumination,
+                                rise: moonData.guthay.riseFormatted,
+                                set: moonData.guthay.setFormatted,
+                                dayInPhase: Math.floor(moonData.guthay.phase * moonData.guthay.period),
+                                daysUntilNext: moonData.guthay.period - Math.floor(moonData.guthay.phase * moonData.guthay.period),
+                            }
+                        ];
+                        
+                        // Set primary moon (Ral for simplicity)
+                        primaryMoonPhase = moonPhases[0].phaseIcon;
+                        primaryMoonColor = moonPhases[0].moonColor;
+                        hasMultipleMoons = true;
+                        
+                        console.debug('🌞 DSC: Moon phases calculated:', moonPhases);
+                        
+                        // Create moon tooltip
+                        if (hasMajorCelestialEvent) {
+                            moonTooltip = `${eclipseInfo.description}\n`;
+                            moonTooltip += `Ral: ${moonData.ral.phaseName} (${moonData.ral.illumination}%) - Rise: ${moonData.ral.riseFormatted}, Set: ${moonData.ral.setFormatted}\n`;
+                            moonTooltip += `Guthay: ${moonData.guthay.phaseName} (${moonData.guthay.illumination}%) - Rise: ${moonData.guthay.riseFormatted}, Set: ${moonData.guthay.setFormatted}`;
+                        } else {
+                            moonTooltip = `Ral: ${moonData.ral.phaseName} (${moonData.ral.illumination}%)\n`;
+                            moonTooltip += `Guthay: ${moonData.guthay.phaseName} (${moonData.guthay.illumination}%)`;
                         }
-                    }
-                    else {
-                        moonTooltip = moonPhaseInfo
-                            .map(info => `${info.moon.name}: ${info.phase.name}`)
-                            .join('\n');
                     }
                 }
             }
             catch (error) {
-                // Show more detailed error for debugging
-                console.error('🌞 DSC: Error calculating moon phases for date:', dayDate, error);
+                console.error('🌞 DSC: Error calculating moon phases/eclipses for date:', dayDate, error);
             }
             
             currentWeek.push({
@@ -344,8 +372,12 @@ class DarkSunCalendarGridWidget extends foundry.applications.api.HandlebarsAppli
                 primaryMoonColor: primaryMoonColor,
                 moonTooltip: moonTooltip,
                 hasMultipleMoons: hasMultipleMoons,
+                // Eclipse properties
+                eclipseInfo: eclipseInfo,
+                hasMajorCelestialEvent: hasMajorCelestialEvent,
                 // Additional properties for template
                 isSelected: isViewDate,
+                isViewDate: isViewDate, // Explicit flag for template
                 isClickable: game.user?.isGM || false,
                 weekday: dayDate.weekday,
                 fullDate: `${viewDate.year}-${viewDate.month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`,
@@ -550,8 +582,8 @@ class DarkSunCalendarGridWidget extends foundry.applications.api.HandlebarsAppli
     }
     
     /**
-     * Format year in Dark Sun style
-     * Returns: "26th Year of King's Age 190, Year of Priest's Defiance"
+     * Format year in Dark Sun style with line break
+     * Returns: "26th Year of King's Age 190,\nYear of Priest's Defiance"
      */
     formatDarkSunYear(year) {
         // Use our DSC API to get Dark Sun year information
@@ -562,7 +594,7 @@ class DarkSunCalendarGridWidget extends foundry.applications.api.HandlebarsAppli
             
             if (kingsAge && kingsAgeYear && yearName) {
                 const ordinalSuffix = this.addOrdinalSuffix(kingsAgeYear);
-                return `${ordinalSuffix} Year of King's Age ${kingsAge}, Year of ${yearName}`;
+                return `${ordinalSuffix} Year of King's Age ${kingsAge},\nYear of ${yearName}`;
             }
         }
         
