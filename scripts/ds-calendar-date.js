@@ -41,6 +41,7 @@ class DSCalendarTimeUtils {
 /**
  * Dark Sun Calendar Date Class
  * Identical to Seasons & Stars CalendarDate for full compatibility
+ * Extended with Dark Sun specific properties
  */
 class DSCalendarDate {
     constructor(data, calendar) {
@@ -51,6 +52,19 @@ class DSCalendarDate {
         this.intercalary = data.intercalary;
         this.time = data.time;
         this.calendar = calendar;
+        
+        // Dark Sun specific properties
+        this.kingsAge = data.kingsAge;
+        this.kingsAgeYear = data.kingsAgeYear;
+        this.yearName = data.yearName;
+        this.dayOfYear = data.dayOfYear;
+        this.freeYear = data.freeYear;
+        
+        // Calculate season information
+        this.season = this.calculateSeason();
+        
+        // Calculate intercalary day information (if in intercalary period)
+        this.intercalaryDay = this.calculateIntercalaryDay();
     }
 
     /**
@@ -110,6 +124,19 @@ class DSCalendarDate {
      * Get a full format string (for detailed display)
      */
     toLongString() {
+        // Use Dark Sun formatting if available
+        if (this.kingsAge && this.kingsAgeYear && this.yearName) {
+            const weekdayName = this.getWeekdayName('long');
+            const dayStr = this.getDayString('long');
+            const monthStr = this.getMonthName('long');
+            const yearStr = `KA ${this.kingsAge}, ${this.kingsAgeYear}`;
+            const yearNameStr = `Year of ${this.yearName}`;
+            const timeStr = this.time ? `, ${this.getTimeString()}` : '';
+            
+            return `${weekdayName}, ${dayStr} ${monthStr}, ${yearStr}, ${yearNameStr}${timeStr}`;
+        }
+        
+        // Fallback to standard format
         return this.format({
             includeTime: true,
             includeWeekday: true,
@@ -122,6 +149,18 @@ class DSCalendarDate {
      * Get just the date portion (no time)
      */
     toDateString() {
+        // Use Dark Sun formatting if available
+        if (this.kingsAge && this.kingsAgeYear && this.yearName) {
+            const weekdayName = this.getWeekdayName('long');
+            const dayStr = this.getDayString('long');
+            const monthStr = this.getMonthName('long');
+            const yearStr = `KA${this.kingsAge}, ${this.kingsAgeYear}`;
+            const yearNameStr = `Year of ${this.yearName}`;
+            
+            return `${weekdayName}, ${dayStr} ${monthStr}, ${yearStr} ${yearNameStr}`;
+        }
+        
+        // Fallback to standard format
         return this.format({
             includeTime: false,
             includeWeekday: true,
@@ -154,6 +193,11 @@ class DSCalendarDate {
      * Get the month name
      */
     getMonthName(format) {
+        // For intercalary periods, return the intercalary name instead
+        if (this.intercalary) {
+            return this.intercalary;
+        }
+        
         const month = this.calendar.months[this.month - 1];
         if (!month) return 'Unknown';
         if (format === 'short' && month.abbreviation) {
@@ -166,6 +210,18 @@ class DSCalendarDate {
      * Get the day string with appropriate suffix
      */
     getDayString(format) {
+        // For intercalary periods, return the intercalary day number
+        if (this.intercalary && this.intercalaryDay) {
+            if (format === 'numeric') {
+                return this.intercalaryDay.toString();
+            }
+            // Add ordinal suffix for long format
+            if (format === 'long') {
+                return this.addOrdinalSuffix(this.intercalaryDay);
+            }
+            return this.intercalaryDay.toString();
+        }
+        
         if (format === 'numeric') {
             return this.day.toString();
         }
@@ -177,9 +233,15 @@ class DSCalendarDate {
     }
 
     /**
-     * Get the year string with prefix/suffix
+     * Get the year string with Dark Sun formatting
      */
     getYearString() {
+        // Use Dark Sun year format if available
+        if (this.kingsAge && this.kingsAgeYear) {
+            return `KA${this.kingsAge}, ${this.kingsAgeYear}`;
+        }
+        
+        // Fallback to standard calendar year format
         const { prefix = '', suffix = '' } = this.calendar.year || {};
         return `${prefix}${this.year}${suffix}`.trim();
     }
@@ -215,6 +277,11 @@ class DSCalendarDate {
             weekday: modifications.weekday ?? this.weekday,
             intercalary: modifications.intercalary ?? this.intercalary,
             time: modifications.time ?? (this.time ? { ...this.time } : undefined),
+            kingsAge: modifications.kingsAge ?? this.kingsAge,
+            kingsAgeYear: modifications.kingsAgeYear ?? this.kingsAgeYear,
+            yearName: modifications.yearName ?? this.yearName,
+            dayOfYear: modifications.dayOfYear ?? this.dayOfYear,
+            freeYear: modifications.freeYear ?? this.freeYear,
         }, this.calendar);
     }
 
@@ -267,6 +334,13 @@ class DSCalendarDate {
             weekday: this.weekday,
             intercalary: this.intercalary,
             time: this.time ? { ...this.time } : undefined,
+            kingsAge: this.kingsAge,
+            kingsAgeYear: this.kingsAgeYear,
+            yearName: this.yearName,
+            dayOfYear: this.dayOfYear,
+            freeYear: this.freeYear,
+            season: this.season,
+            intercalaryDay: this.intercalaryDay,
         };
     }
 
@@ -275,6 +349,179 @@ class DSCalendarDate {
      */
     static fromObject(data, calendar) {
         return new DSCalendarDate(data, calendar);
+    }
+
+    /**
+     * Get the King's Age for this date
+     */
+    getKingsAge() {
+        return this.kingsAge;
+    }
+
+    /**
+     * Get the King's Age Year for this date
+     */
+    getKingsAgeYear() {
+        return this.kingsAgeYear;
+    }
+
+    /**
+     * Get the year name for this date
+     */
+    getYearName() {
+        return this.yearName;
+    }
+
+    /**
+     * Get the day of year for this date
+     */
+    getDayOfYear() {
+        return this.dayOfYear;
+    }
+
+    /**
+     * Get the Free Year for this date
+     */
+    getFreeYear() {
+        return this.freeYear;
+    }
+
+    /**
+     * Calculate the season for this date
+     */
+    calculateSeason() {
+        if (!this.calendar || !this.dayOfYear) {
+            return null;
+        }
+        
+        const day = this.dayOfYear;
+        let seasonName = '';
+        let startDay = 0;
+        let endDay = 0;
+        
+        // Dark Sun seasonal logic:
+        // if day >= 311 || day <= 60 season = "High Sun"
+        // if day > 60 && day < 186 season = "Sun Descending"
+        // otherwise season = "Sun Ascending"
+        
+        if ((day >= 311) || (day <= 60)) {
+            seasonName = 'High Sun';
+            startDay = 311;
+            endDay = 60;
+        } else if (day > 60 && day < 186) {
+            seasonName = 'Sun Descending';
+            startDay = 61;
+            endDay = 185;
+        } else {
+            seasonName = 'Sun Ascending';
+            startDay = 186;
+            endDay = 310;
+        }
+        
+        // Calculate season metrics
+        let daysInSeason, daysIntoSeason, daysRemaining;
+        
+        if (seasonName === 'High Sun') {
+            // High Sun spans across year boundary
+            if (day >= 311) {
+                // Days 311-375 (65 days)
+                daysInSeason = 125; // 65 + 60
+                daysIntoSeason = day - 311 + 1;
+                daysRemaining = 375 - day + 60;
+            } else {
+                // Days 1-60 (60 days)
+                daysInSeason = 125; // 65 + 60
+                daysIntoSeason = day + 65; // 65 days from previous part + current day
+                daysRemaining = 60 - day + 65; // Remaining days in this part + 65 from next part
+            }
+        } else {
+            // Regular season calculation
+            daysInSeason = endDay - startDay + 1;
+            daysIntoSeason = day - startDay + 1;
+            daysRemaining = endDay - day;
+        }
+        
+        return {
+            name: seasonName,
+            description: '',
+            startDay: startDay,
+            endDay: endDay,
+            daysInSeason: daysInSeason,
+            daysIntoSeason: daysIntoSeason,
+            daysRemaining: daysRemaining,
+            dayOfYear: this.dayOfYear
+        };
+    }
+
+    /**
+     * Get the season information for this date
+     */
+    getSeason() {
+        return this.season;
+    }
+
+    /**
+     * Calculate the intercalary day for this date
+     */
+    calculateIntercalaryDay() {
+        // If not in an intercalary period, return null
+        if (!this.intercalary) {
+            return null;
+        }
+        
+        // Use the existing intercalary property from Seasons & Stars
+        // and calculate which day of the period it is based on day of year
+        const day = this.dayOfYear;
+        
+        // Dark Sun intercalary periods:
+        // Cooling Sun: Days 121-125 (after month 4 - Gather)
+        // Soaring Sun: Days 246-250 (after month 8 - Haze)  
+        // Highest Sun: Days 371-375 (after month 12 - Smolder)
+        
+        if (this.intercalary === 'Cooling Sun' && day >= 121 && day <= 125) {
+            return day - 121 + 1; // Day 1-5 of Cooling Sun
+        } else if (this.intercalary === 'Soaring Sun' && day >= 246 && day <= 250) {
+            return day - 246 + 1; // Day 1-5 of Soaring Sun
+        } else if (this.intercalary === 'Highest Sun' && day >= 371 && day <= 375) {
+            return day - 371 + 1; // Day 1-5 of Highest Sun
+        }
+        
+        // If we get here, the intercalary property is set but the day doesn't match
+        // This could happen if Seasons & Stars has incorrect intercalary logic
+        // console.warn(`🌞 Dark Sun Calendar | Intercalary mismatch: ${this.intercalary} for day ${day}`);
+        return null;
+    }
+
+    /**
+     * Get the intercalary day for this date (1-5, or null if not in intercalary period)
+     */
+    getIntercalaryDay() {
+        return this.intercalaryDay;
+    }
+
+    /**
+     * Format the date in Dark Sun style
+     * Returns: "Xst/nd/rd/th year of King's Age Y, Year of [YearName]"
+     */
+    formatDarkSunDate() {
+        if (!this.kingsAge || !this.kingsAgeYear || !this.yearName) {
+            return this.format(); // Fallback to regular format
+        }
+        
+        const yearWithSuffix = DSCalendarTimeUtils.addOrdinalSuffix(this.kingsAgeYear);
+        return `${yearWithSuffix} year of King's Age ${this.kingsAge}, Year of ${this.yearName}`;
+    }
+
+    /**
+     * Get a short Dark Sun format
+     * Returns: "King's Age X, Year Y"
+     */
+    formatDarkSunShort() {
+        if (!this.kingsAge || !this.kingsAgeYear) {
+            return this.format({ includeYear: true, format: 'short' });
+        }
+        
+        return `King's Age ${this.kingsAge}, Year ${this.kingsAgeYear}`;
     }
 }
 

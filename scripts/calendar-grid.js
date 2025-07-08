@@ -89,7 +89,7 @@ class DarkSunCalendarGridWidget extends foundry.applications.api.HandlebarsAppli
             monthData: monthData,
             monthName: activeCalendar.months[this.viewDate.month - 1]?.name || 'Unknown',
             monthDescription: activeCalendar.months[this.viewDate.month - 1]?.description,
-            yearDisplay: `${activeCalendar.year?.prefix || ''}${this.viewDate.year}${activeCalendar.year?.suffix || ''}`,
+            yearDisplay: this.formatDarkSunYear(this.viewDate.year),
             isGM: isGM,
             clickBehavior: clickBehavior,
             uiHint: uiHint,
@@ -98,6 +98,9 @@ class DarkSunCalendarGridWidget extends foundry.applications.api.HandlebarsAppli
                 abbreviation: wd.abbreviation,
                 description: wd.description,
             })),
+            // Add intercalary information for template
+            hasIntercalary: monthData.intercalaryDays && monthData.intercalaryDays.length > 0,
+            intercalaryDays: monthData.intercalaryDays || [],
         });
     }
     
@@ -121,7 +124,7 @@ class DarkSunCalendarGridWidget extends foundry.applications.api.HandlebarsAppli
         }
         
         // Get current date from SS manager for comparison
-        const ssCurrentDate = manager.getCurrentDate();
+        const ssCurrentDate = game.seasonsStars?.manager?.getCurrentDate();
         if (!ssCurrentDate) {
             console.warn('🌞 DSC: Cannot get current date from SS manager');
             return { 
@@ -137,8 +140,13 @@ class DarkSunCalendarGridWidget extends foundry.applications.api.HandlebarsAppli
         const monthInfo = calendar.months[viewDate.month - 1];
         if (!monthInfo)
             return { weeks: [], totalDays: 0 };
+            
+        // Check if this month should show an intercalary period after it
+        const intercalaryAfterThisMonth = this.getIntercalaryDaysForMonth(viewDate.year, viewDate.month);
+        
         // Calculate month length (considering leap years)
         const monthLength = engine.getMonthLength(viewDate.month, viewDate.year);
+        
         // Find the first day of the month and its weekday
         const firstDayData = {
             year: viewDate.year,
@@ -148,6 +156,7 @@ class DarkSunCalendarGridWidget extends foundry.applications.api.HandlebarsAppli
             time: { hour: 0, minute: 0, second: 0 },
         };
         const firstDay = new CalendarDate(firstDayData, calendar);
+        
         // Get notes for this month for note indicators with category and tooltip information
         const notesManager = game.seasonsStars?.notes;
         const monthNotes = new Map(); // dateKey -> note data
@@ -209,9 +218,11 @@ class DarkSunCalendarGridWidget extends foundry.applications.api.HandlebarsAppli
                 console.warn('Error loading notes for calendar', error);
             }
         }
+        
         // Build calendar grid
         const weeks = [];
         let currentWeek = [];
+        
         // Fill in empty cells before month starts
         const startWeekday = firstDay.weekday || 0;
         for (let i = 0; i < startWeekday; i++) {
@@ -224,6 +235,7 @@ class DarkSunCalendarGridWidget extends foundry.applications.api.HandlebarsAppli
                 isEmpty: true,
             });
         }
+        
         // Fill in the days of the month
         for (let day = 1; day <= monthLength; day++) {
             const dayDateData = {
@@ -240,6 +252,7 @@ class DarkSunCalendarGridWidget extends foundry.applications.api.HandlebarsAppli
             const noteData = monthNotes.get(dateKey);
             const noteCount = noteData?.count || 0;
             const hasNotes = noteCount > 0;
+            
             // Determine category class for styling
             let categoryClass = '';
             if (hasNotes && noteData) {
@@ -250,6 +263,7 @@ class DarkSunCalendarGridWidget extends foundry.applications.api.HandlebarsAppli
                     categoryClass = `category-${noteData.primaryCategory}`;
                 }
             }
+            
             // Create enhanced tooltip with note details
             let noteTooltip = '';
             if (hasNotes && noteData) {
@@ -261,6 +275,7 @@ class DarkSunCalendarGridWidget extends foundry.applications.api.HandlebarsAppli
                     .join('\n');
                 noteTooltip = `${noteCount} note(s) (${noteData.primaryCategory}):\n${notesList}`;
             }
+            
             // Calculate moon phases for this day
             let moonPhases = [];
             let primaryMoonPhase;
@@ -268,7 +283,13 @@ class DarkSunCalendarGridWidget extends foundry.applications.api.HandlebarsAppli
             let moonTooltip = '';
             let hasMultipleMoons = false;
             try {
-                const moonPhaseInfo = engine.getMoonPhaseInfo?.(dayDate);
+                // Convert DSCalendarDate to plain object for engine compatibility
+                const engineDate = dayDate.toObject ? dayDate.toObject() : dayDate;
+                console.debug('🌞 DSC: Calculating moon phases for date:', engineDate);
+                
+                const moonPhaseInfo = engine.getMoonPhaseInfo?.(engineDate);
+                console.debug('🌞 DSC: Moon phase info result:', moonPhaseInfo);
+                
                 if (moonPhaseInfo && moonPhaseInfo.length > 0) {
                     moonPhases = moonPhaseInfo.map(info => ({
                         moonName: info.moon.name,
@@ -283,6 +304,9 @@ class DarkSunCalendarGridWidget extends foundry.applications.api.HandlebarsAppli
                     primaryMoonPhase = primaryMoon.phase.icon;
                     primaryMoonColor = primaryMoon.moon.color;
                     hasMultipleMoons = moonPhaseInfo.length > 1;
+                    
+                    console.debug('🌞 DSC: Primary moon phase:', primaryMoonPhase, 'Color:', primaryMoonColor);
+                    
                     // Create moon tooltip
                     if (moonPhaseInfo.length === 1) {
                         const moon = moonPhaseInfo[0];
@@ -299,9 +323,10 @@ class DarkSunCalendarGridWidget extends foundry.applications.api.HandlebarsAppli
                 }
             }
             catch (error) {
-                // Silently handle moon calculation errors to avoid breaking calendar display
-                console.warn('Error calculating moon phases for date:', dayDate, error);
+                // Show more detailed error for debugging
+                console.error('🌞 DSC: Error calculating moon phases for date:', dayDate, error);
             }
+            
             currentWeek.push({
                 day: day,
                 date: {
@@ -331,12 +356,14 @@ class DarkSunCalendarGridWidget extends foundry.applications.api.HandlebarsAppli
                 noteTooltip: noteTooltip,
                 canCreateNote: this.canCreateNote(),
             });
+            
             // Start new week on last day of week
             if (currentWeek.length === calendar.weekdays.length) {
                 weeks.push(currentWeek);
                 currentWeek = [];
             }
         }
+        
         // Fill in empty cells after month ends
         if (currentWeek.length > 0) {
             while (currentWeek.length < calendar.weekdays.length) {
@@ -351,52 +378,57 @@ class DarkSunCalendarGridWidget extends foundry.applications.api.HandlebarsAppli
             }
             weeks.push(currentWeek);
         }
-        // Add intercalary days as separate full-width rows
-        const intercalaryDays = engine.getIntercalaryDaysAfterMonth(viewDate.year, viewDate.month);
-        for (const intercalary of intercalaryDays) {
-            // Find the month that this intercalary day comes after
-            const afterMonthIndex = calendar.months.findIndex(m => m.name === intercalary.after);
-            const intercalaryMonth = afterMonthIndex >= 0 ? afterMonthIndex + 1 : viewDate.month;
-            const intercalaryDateData = {
-                year: viewDate.year,
-                month: intercalaryMonth, // Use the month it comes after (1-based)
-                day: 1, // Intercalary days don't have regular day numbers
-                weekday: 0, // Intercalary days don't have weekdays
-                time: { hour: 0, minute: 0, second: 0 },
-                intercalary: intercalary.name,
-            };
-            const intercalaryDate = new CalendarDate(intercalaryDateData, calendar);
-            const isToday = this.isSameIntercalaryDate(intercalaryDate, ssCurrentDate);
-            const isViewDate = this.isSameIntercalaryDate(intercalaryDate, viewDate);
-            // Create intercalary day row as full-width cell
-            const intercalaryRow = [
-                {
-                    day: intercalary.name,
+        
+        // Add intercalary period after this month if it has one
+        for (const intercalary of intercalaryAfterThisMonth) {
+            // Create a single row with 5 intercalary days
+            const intercalaryRow = [];
+            
+            for (let intercalaryDay = 1; intercalaryDay <= 5; intercalaryDay++) {
+                const intercalaryDateData = {
+                    year: viewDate.year,
+                    month: viewDate.month, // Use the month it comes after
+                    day: 1, // Intercalary days use day 1 as placeholder
+                    weekday: 0, // Intercalary days don't have weekdays
+                    time: { hour: 0, minute: 0, second: 0 },
+                    intercalary: intercalary.name,
+                    intercalaryDay: intercalaryDay,
+                };
+                const intercalaryDate = new CalendarDate(intercalaryDateData, calendar);
+                // Determine if this is the current or selected intercalary day
+                const isCurrentIntercalary = ssCurrentDate.intercalary === intercalary.name && (ssCurrentDate.intercalaryDay === intercalaryDay || ssCurrentDate.day === intercalaryDay);
+                const isViewIntercalary = viewDate.intercalary === intercalary.name && (viewDate.intercalaryDay === intercalaryDay || viewDate.day === intercalaryDay);
+                
+                intercalaryRow.push({
+                    day: intercalaryDay, // Show 1-5 for intercalary days
                     date: intercalaryDate,
-                    isToday: isToday,
-                    isSelected: isViewDate,
+                    isToday: isCurrentIntercalary,
+                    isSelected: isViewIntercalary,
                     isClickable: game.user?.isGM || false,
-                    isCurrentMonth: true, // Intercalary days are always part of the current month
+                    isCurrentMonth: true, // Intercalary days are part of the current month view
                     isIntercalary: true,
                     intercalaryName: intercalary.name,
                     intercalaryDescription: intercalary.description,
-                    fullDate: `${viewDate.year}-${viewDate.month.toString().padStart(2, '0')}-${intercalary.name}`,
+                    intercalaryDay: intercalaryDay,
+                    fullDate: `${viewDate.year}-${viewDate.month.toString().padStart(2, '0')}-${intercalary.name}-${intercalaryDay}`,
                     hasNotes: false, // TODO: Add intercalary note support in future
                     noteCount: 0,
                     categoryClass: '',
                     primaryCategory: 'general',
                     noteTooltip: '',
                     canCreateNote: this.canCreateNote(),
-                },
-            ];
+                });
+            }
+            
             weeks.push(intercalaryRow);
         }
+        
         return {
             weeks: weeks,
             totalDays: monthLength,
             monthName: monthInfo.name,
             monthDescription: monthInfo.description,
-            intercalaryDays: intercalaryDays,
+            intercalaryDays: intercalaryAfterThisMonth,
         };
     }
     
@@ -478,6 +510,90 @@ class DarkSunCalendarGridWidget extends foundry.applications.api.HandlebarsAppli
             date1.intercalary === date2.intercalary &&
             !!date1.intercalary &&
             !!date2.intercalary);
+    }
+    
+    /**
+     * Get intercalary days for a specific month (Dark Sun specific)
+     */
+    getIntercalaryDaysForMonth(year, month) {
+        // Dark Sun intercalary periods:
+        // Cooling Sun: After month 4 (Gather)
+        // Soaring Sun: After month 8 (Haze)
+        // Highest Sun: After month 12 (Smolder)
+        
+        const intercalaryDays = [];
+        
+        if (month === 4) {
+            intercalaryDays.push({
+                name: "Cooling Sun",
+                after: "Gather",
+                days: 5,
+                description: "A five-day period when the sun's killing heat allegedly lessens. Even this 'cooling' would be deadly on any other world, but on Athas it represents a brief chance for survival and preparation."
+            });
+        } else if (month === 8) {
+            intercalaryDays.push({
+                name: "Soaring Sun",
+                after: "Haze",
+                days: 5,
+                description: "Five days when the sun reaches one of its peaks of deadly intensity. A time of seeking shelter and enduring the worst that Athas can unleash upon its unfortunate inhabitants."
+            });
+        } else if (month === 12) {
+            intercalaryDays.push({
+                name: "Highest Sun",
+                after: "Smolder",
+                days: 5,
+                description: "The most dreaded five days of the Athasian year when the sun reaches its absolute peak of killing power. Even the strongest creatures seek shelter from this ultimate test of survival."
+            });
+        }
+        
+        return intercalaryDays;
+    }
+    
+    /**
+     * Format year in Dark Sun style
+     * Returns: "26th Year of King's Age 190, Year of Priest's Defiance"
+     */
+    formatDarkSunYear(year) {
+        // Use our DSC API to get Dark Sun year information
+        if (window.DSC) {
+            const kingsAge = window.DSC.getKingsAge(year);
+            const kingsAgeYear = window.DSC.getKingsAgeYear(year);
+            const yearName = window.DSC.getYearName(year);
+            
+            if (kingsAge && kingsAgeYear && yearName) {
+                const ordinalSuffix = this.addOrdinalSuffix(kingsAgeYear);
+                return `${ordinalSuffix} Year of King's Age ${kingsAge}, Year of ${yearName}`;
+            }
+        }
+        
+        // Fallback to simple year display
+        return `Year ${year}`;
+    }
+    
+    /**
+     * Calculate day of year for Dark Sun calendar
+     * Considers intercalary periods after months 4, 8, and 12
+     */
+    calculateDayOfYear(month, day, year) {
+        // Intercalary periods occur after months 4, 8, and 12
+        const intercalaryMonths = [4, 8, 12];
+        
+        let dayOfYear = 0;
+        
+        // Add days from previous months (30 days each)
+        for (let m = 1; m < month; m++) {
+            dayOfYear += 30;
+            
+            // Add intercalary days if this month is followed by an intercalary period
+            if (intercalaryMonths.includes(m)) {
+                dayOfYear += 5;
+            }
+        }
+        
+        // Add days in current month
+        dayOfYear += day;
+        
+        return dayOfYear;
     }
     
     /**
@@ -585,6 +701,7 @@ class DarkSunCalendarGridWidget extends foundry.applications.api.HandlebarsAppli
             if (isIntercalary) {
                 // Handle intercalary day selection
                 const intercalaryName = target.dataset.day; // For intercalary days, day contains the name
+                const intercalaryDay = parseInt(target.dataset.intercalaryDay, 10) || 1;
                 if (!intercalaryName)
                     return;
                 // Find the intercalary day definition to determine which month it comes after
@@ -592,34 +709,55 @@ class DarkSunCalendarGridWidget extends foundry.applications.api.HandlebarsAppli
                 const intercalaryDef = calendar.intercalary?.find(i => i.name === intercalaryName);
                 if (!intercalaryDef)
                     return;
-                // Find the month that this intercalary day comes after
-                const afterMonthIndex = calendar.months.findIndex(m => m.name === intercalaryDef.after);
-                if (afterMonthIndex === -1)
+                // Calculate the correct dayOfYear for this intercalary period
+                let dayOfYear;
+                if (intercalaryName === "Cooling Sun") {
+                    dayOfYear = 121 + (intercalaryDay - 1); // Days 121-125
+                } else if (intercalaryName === "Soaring Sun") {
+                    dayOfYear = 246 + (intercalaryDay - 1); // Days 246-250
+                } else if (intercalaryName === "Highest Sun") {
+                    dayOfYear = 371 + (intercalaryDay - 1); // Days 371-375
+                } else {
+                    console.error('🌞 DSC: Unknown intercalary period:', intercalaryName);
                     return;
+                }
                 const targetDateData = {
                     year: this.viewDate.year,
-                    month: afterMonthIndex + 1, // Use the month it comes after (1-based)
-                    day: 1, // Intercalary days typically use day 1 as a placeholder
+                    dayOfYear: dayOfYear, // Add the calculated dayOfYear
+                    intercalary: intercalaryName,
+                    intercalaryDay: intercalaryDay,
                     weekday: 0, // Intercalary days don't have weekdays
                     time: currentDate?.time || { hour: 0, minute: 0, second: 0 },
-                    intercalary: intercalaryName,
+                    // month and day intentionally omitted for intercalary days
                 };
                 targetDate = new CalendarDate(targetDateData, calendar);
-                const afterMonthName = calendar.months[afterMonthIndex]?.name || 'Unknown';
+                const afterMonthIndex = calendar.months.findIndex(m => m.name === intercalaryDef.after);
+                const safeDateForAPI = {
+                    ...targetDateData,
+                    month: afterMonthIndex + 1, // Provide numeric month for API
+                    day: intercalaryDay // Provide numeric day for API
+                };
+                const afterMonthName = intercalaryDef.after || 'Unknown';
                 const yearDisplay = this.formatYear(this.viewDate.year);
-                ui.notifications?.info(`Date set to ${intercalaryName} (intercalary day after ${afterMonthName} ${yearDisplay})`);
+                ui.notifications?.info(`Date set to ${intercalaryName} Day ${intercalaryDay} (intercalary day after ${afterMonthName} ${yearDisplay})`);
+                await manager.setCurrentDate(safeDateForAPI);
             }
             else {
                 // Handle regular day selection
                 const day = parseInt(target.dataset.day || '0');
                 if (day < 1)
                     return;
+                
+                // Calculate dayOfYear for regular days
+                const dayOfYear = this.calculateDayOfYear(this.viewDate.month, day, this.viewDate.year);
+                
                 const targetDateData = {
                     year: this.viewDate.year,
                     month: this.viewDate.month,
                     day: day,
                     weekday: engine.calculateWeekday(this.viewDate.year, this.viewDate.month, day),
                     time: currentDate?.time || { hour: 0, minute: 0, second: 0 },
+                    dayOfYear: dayOfYear, // Add the calculated dayOfYear
                 };
                 const calendar = engine.getCalendar();
                 targetDate = new CalendarDate(targetDateData, calendar);
@@ -627,9 +765,8 @@ class DarkSunCalendarGridWidget extends foundry.applications.api.HandlebarsAppli
                 const dayWithSuffix = this.addOrdinalSuffix(targetDate.day);
                 const yearDisplay = this.formatYear(targetDate.year);
                 ui.notifications?.info(`Date set to ${dayWithSuffix} of ${monthName}, ${yearDisplay}`);
+                await manager.setCurrentDate(targetDate);
             }
-            // Set the target date
-            await manager.setCurrentDate(targetDate);
             // Update view date to selected date
             this.viewDate = targetDate;
             this.render();
