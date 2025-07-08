@@ -19,6 +19,7 @@
         "scripts/eclipse-engine.js",
         "scripts/ds-calendar-date.js",
         "scripts/calendar-grid.js",
+        "scripts/chat-commands.js",
         "scripts/main.js"
     ],
     "styles": [
@@ -46,6 +47,13 @@
             {
                 "id": "seasons-and-stars",
                 "type": "module"
+            }
+        ],
+        "optional": [
+            {
+                "id": "_chatcommands",
+                "type": "module",
+                "reason": "Enables chat commands for calendar operations"
             }
         ]
     }
