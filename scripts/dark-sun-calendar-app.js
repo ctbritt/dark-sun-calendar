@@ -241,8 +241,8 @@ class DarkSunCalendarApp extends foundry.applications.api.ApplicationV2 {
       });
     }
 
-    // Check for full moons
-    if (ralPhase >= 0.45 && ralPhase <= 0.55) {
+    // Check for full moons (phase 0.0 = full moon)
+    if (ralPhase <= 0.05 || ralPhase >= 0.95) {
       events.push({
         type: "full-moon-ral",
         symbol: "🌕",
@@ -251,7 +251,7 @@ class DarkSunCalendarApp extends foundry.applications.api.ApplicationV2 {
       });
     }
 
-    if (guthayPhase >= 0.45 && guthayPhase <= 0.55) {
+    if (guthayPhase <= 0.05 || guthayPhase >= 0.95) {
       events.push({
         type: "full-moon-guthay",
         symbol: "🌕",
@@ -260,8 +260,8 @@ class DarkSunCalendarApp extends foundry.applications.api.ApplicationV2 {
       });
     }
 
-    // Check for new moons
-    if (ralPhase <= 0.05 || ralPhase >= 0.95) {
+    // Check for new moons (phase 0.5 = new moon)
+    if (ralPhase >= 0.45 && ralPhase <= 0.55) {
       events.push({
         type: "new-moon-ral",
         symbol: "🌑",
@@ -270,7 +270,7 @@ class DarkSunCalendarApp extends foundry.applications.api.ApplicationV2 {
       });
     }
 
-    if (guthayPhase <= 0.05 || guthayPhase >= 0.95) {
+    if (guthayPhase >= 0.45 && guthayPhase <= 0.55) {
       events.push({
         type: "new-moon-guthay",
         symbol: "🌑",
