@@ -220,8 +220,30 @@ class AthasianMoonSystem {
      * @returns {number} LCM
      */
     calculateLCM(a, b) {
-        const gcd = (x, y) => y === 0 ? x : gcd(y, x % y);
-        return Math.abs(a * b) / gcd(a, b);
+        // Input validation
+        if (!Number.isInteger(a) || !Number.isInteger(b)) {
+            throw new Error('LCM calculation requires integer inputs');
+        }
+        if (a === 0 || b === 0) {
+            throw new Error('Cannot calculate LCM with zero');
+        }
+        
+        // Use iterative GCD to avoid stack overflow
+        const gcd = (x, y) => {
+            while (y !== 0) {
+                const temp = y;
+                y = x % y;
+                x = temp;
+            }
+            return x;
+        };
+        
+        const gcdResult = gcd(Math.abs(a), Math.abs(b));
+        if (gcdResult === 0) {
+            throw new Error('GCD calculation failed');
+        }
+        
+        return Math.abs(a * b) / gcdResult;
     }
     
     /**

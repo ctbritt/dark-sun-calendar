@@ -1,49 +1,24 @@
 {
-    "dark-sun-calendar": {
+    "DARK_SUN_CALENDAR": {
+        "name": "Dark Sun Calendar",
+        "description": "Athasian Calendar (Dark Sun)",
         "settings": {
-            "kingsAge": {
-                "name": "Current King's Age",
-                "hint": "The current King's Age number in the Athasian calendar"
-            },
-            "yearInAge": {
-                "name": "Current Year in Age",
-                "hint": "The current year within the King's Age (1-77)"
-            },
-            "dayOfYear": {
-                "name": "Current Day of Year",
-                "hint": "The current day of the Athasian year (1-375)"
-            },
-            "timeSync": {
-                "name": "Enable Time Synchronization",
-                "hint": "Automatically advance the Dark Sun calendar when FoundryVTT world time advances"
-            }
+            "title": "Dark Sun Calendar Settings",
+            "description": "Configure Dark Sun Calendar options"
         },
-        "ui": {
-            "calendarTitle": "Dark Sun Calendar",
-            "advanceTime": "Advance Time",
-            "historicalEvents": "Historical Events",
-            "close": "Close",
-            "phase": "Phase",
-            "month": "Month",
-            "freeYear": "Free Year",
-            "moonPhases": "Moon Phases",
-            "nextEclipse": "Next Eclipse",
-            "kingsAge": "King's Age",
-            "yearInAge": "Year in Age",
-            "dayOfYear": "Day of Year",
-            "previousDay": "Previous Day",
-            "nextDay": "Next Day",
-            "previousYear": "Previous Year",
-            "nextYear": "Next Year"
+        "seasons": {
+            "high_sun": "High Sun",
+            "sun_descending": "Sun Descending",
+            "sun_ascending": "Sun Ascending"
         },
-        "notifications": {
-            "timeAdvanced": "Advanced {days} day(s). Now: {yearName}, Day {day}"
+        "intercalary": {
+            "cooling_sun": "Cooling Sun",
+            "soaring_sun": "Soaring Sun",
+            "highest_sun": "Highest Sun"
         },
-        "chat": {
-            "commands": "Dark Sun Calendar Commands",
-            "dateCommand": "Show current date",
-            "moonCommand": "Show moon phases",
-            "advanceCommand": "Advance calendar"
+        "moons": {
+            "ral": "Ral",
+            "guthay": "Guthay"
         }
     }
 }
