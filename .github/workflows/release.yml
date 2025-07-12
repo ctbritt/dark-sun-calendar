@@ -1,160 +1,145 @@
-name: Release Dark Sun Calendar Module
+# GitHub Actions workflow for creating a new FoundryVTT module release.
+#
+# Useful References:
+#   - https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions
+#   - https://docs.github.com/en/actions/learn-github-actions/contexts
+#   - https://docs.github.com/en/actions/learn-github-actions/environment-variables
+#
+# Troubleshooting Checklist:
+#   - Is the module's manifest file valid JSON?
+#     You can test your manifest file using https://jsonlint.com/.
+#
+#   - Does the module's manifest have all the required keys?
+#     See https://foundryvtt.com/article/module-development/#manifest for more
+#     information.
+#
+#   - Are all the proper files and directories being included in the release's
+#     module archive ("module.zip")?
+#     Check that the correct files are being passed to the `zip` command run
+#     in the "Create Module Archive" step below.
+#
+#   - Is the release tag the proper format?
+#     See the comments for the "Extract Version From Tag" step below.
+#
+#   - Is a GitHub release being published?
+#     This workflow will only run when a release is published, not when a
+#     release is updated. Furthermore, note that while a GitHub release will
+#     (by default) create a repository tag, a repository tag will not create
+#     or publish a GitHub release.
+#
+#   - Has the module's entry on FoundryVTT's module administration site
+#     (https://foundryvtt.com/admin) been updated?
+#
+name: Create Module Files For GitHub Release
+
+
+env:
+  # The URL used for the module's "Project URL" link on FoundryVTT's website.
+  project_url: "https://github.com/${{github.repository}}"
+
+  # A URL that will always point to the latest manifest.
+  # FoundryVTT uses this URL to check whether the current module version that
+  # is installed is the latest version. This URL should NOT change,
+  # otherwise FoundryVTT won't be able to perform this check.
+  latest_manifest_url: "https://github.com/${{github.repository}}/releases/latest/download/module.json"
+
+  # The URL to the module archive associated with the module release being
+  # processed by this workflow.
+  release_module_url: "https://github.com/${{github.repository}}/releases/download/${{github.event.release.tag_name}}/module.zip"
+
 
 on:
-  push:
-    tags:
-      - 'v*'
-  workflow_dispatch:
-    inputs:
-      version:
-        description: 'Version to release (e.g., 13.0.0)'
-        required: true
-        type: string
+  # Only run this workflow when a release is published.
+  # To modify this workflow when other events occur, see:
+  #   - https://docs.github.com/en/actions/using-workflows/triggering-a-workflow
+  #   - https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows
+  #   - https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#on
+  #
+  # Note that some steps may depend on context variables that are only
+  # available for release events, so if you add other events, you may need to
+  # alter other parts of this workflow.
+  release:
+    types: [published]
+
 
 jobs:
-  release:
+  build:
     runs-on: ubuntu-latest
-    
+    permissions:
+      contents: write
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v3
         with:
-          node-version: '18'
-          
-      - name: Get version
+          submodules: 'true'
+
+      # Extract version embedded in the tag.
+      # This step expects the tag to be one of the following formats:
+      #   - "v<major>.<minor>.<patch>" (e.g., "v1.2.3")
+      #   - "<major>.<minor>.<patch>"  (e.g., "1.2.3")
+      #
+      # The version will be used by later steps to fill in the value for the
+      # "version" key required for a valid module manifest.
+      - name: Extract Version From Tag
         id: get_version
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
-          else
-            # Extract version from tag (remove 'v' prefix)
-            VERSION=${GITHUB_REF#refs/tags/v}
-            echo "version=$VERSION" >> $GITHUB_OUTPUT
-          fi
-          
-      - name: Validate module.json
-        run: |
-          # Check if module.json exists and is valid JSON
-          if [ ! -f "module.json" ]; then
-            echo "❌ module.json not found"
-            exit 1
-          fi
-          
-          # Validate JSON syntax
-          if ! jq empty module.json 2>/dev/null; then
-            echo "❌ module.json is not valid JSON"
-            exit 1
-          fi
-          
-          # Check if version in module.json matches release version
-          MODULE_VERSION=$(jq -r '.version' module.json)
-          RELEASE_VERSION="${{ steps.get_version.outputs.version }}"
-          
-          if [ "$MODULE_VERSION" != "$RELEASE_VERSION" ]; then
-            echo "❌ Version mismatch: module.json has $MODULE_VERSION, but releasing $RELEASE_VERSION"
-            echo "Please update module.json version to match the release version"
-            exit 1
-          fi
-          
-          echo "✅ module.json validation passed"
-          echo "📦 Module version: $MODULE_VERSION"
-          
-      - name: Create release package
-        run: |
-          VERSION="${{ steps.get_version.outputs.version }}"
-          PACKAGE_NAME="dark-sun-calendar-$VERSION.zip"
-          
-          # Create zip file excluding unnecessary files
-          zip -r "$PACKAGE_NAME" . \
-            -x "*.git*" \
-            -x ".DS_Store" \
-            -x ".claude/*" \
-            -x ".specstory/*" \
-            -x "test-*.js" \
-            -x "macro-example.js" \
-            -x "*.log" \
-            -x "node_modules/*" \
-            -x ".github/*" \
-            -x "README.md" \
-            -x "CHANGELOG.md" \
-            -x "LICENSE" \
-            -x ".gitignore"
-            
-          echo "📦 Created package: $PACKAGE_NAME"
-          echo "package_name=$PACKAGE_NAME" >> $GITHUB_OUTPUT
-          
-      - name: Get release notes
-        id: get_release_notes
-        run: |
-          # Try to get release notes from CHANGELOG.md if it exists
-          if [ -f "CHANGELOG.md" ]; then
-            # Extract section for this version
-            VERSION="${{ steps.get_version.outputs.version }}"
-            RELEASE_NOTES=$(awk -v version="$VERSION" '
-              /^## \[?v?'"$VERSION"'\]?/ { p=1; next }
-              /^## \[?v?[0-9]/ { p=0 }
-              p { print }
-            ' CHANGELOG.md | sed '/^$/d')
-            
-            if [ -n "$RELEASE_NOTES" ]; then
-              echo "release_notes<<EOF" >> $GITHUB_OUTPUT
-              echo "$RELEASE_NOTES" >> $GITHUB_OUTPUT
-              echo "EOF" >> $GITHUB_OUTPUT
-            else
-              echo "release_notes=Release $VERSION of Dark Sun Calendar module for Foundry VTT." >> $GITHUB_OUTPUT
-            fi
-          else
-            echo "release_notes=Release ${{ steps.get_version.outputs.version }} of Dark Sun Calendar module for Foundry VTT." >> $GITHUB_OUTPUT
-          fi
-          
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
+        uses: battila7/get-version-action@v2
+
+
+      # Modify "module.json" with values specific to the release.
+      # Since the values for the "version" and "url" keys aren't known ahead of
+      # time, the manifest file in the repository is updated with these values.
+      #
+      # While this does modify the manifest file in-place, the changes are not
+      # commited to the repository, and only exist in the action's filesystem.
+      - name: Modify Module Manifest With Release-Specific Values
+        id: sub_manifest_link_version
+        uses: cschleiden/replace-tokens@v1
         with:
-          files: ${{ steps.create_release_package.outputs.package_name }}
-          tag_name: v${{ steps.get_version.outputs.version }}
-          name: Dark Sun Calendar v${{ steps.get_version.outputs.version }}
-          body: |
-            ## Dark Sun Calendar v${{ steps.get_version.outputs.version }}
-            
-            ${{ steps.get_release_notes.outputs.release_notes }}
-            
-            ### Installation
-            
-            1. Download the `dark-sun-calendar-${{ steps.get_version.outputs.version }}.zip` file
-            2. Extract it to your Foundry VTT `Data/modules/` directory
-            3. Restart Foundry VTT
-            4. Enable the module in your world settings
-            
-            ### Requirements
-            
-            - Foundry VTT v13+
-            - Seasons & Stars module (required)
-            
-            ### Features
-            
-            - Complete Athasian calendar system with King's Ages
-            - Lunar cycles for Ral and Guthay
-            - Eclipse calculations and predictions
-            - Historical events timeline
-            - Chat commands for calendar operations
-            - Calendar grid widget
-            - Free Year conversion utilities
-            
-            ### Changes
-            
-            See the [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for detailed changes.
-            
-          draft: false
-          prerelease: false
+          files: 'module.json'
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          
-      - name: Upload package to release
-        if: failure()
+          VERSION: ${{steps.get_version.outputs.version-without-v}}
+          URL: ${{ env.project_url }}
+          MANIFEST: ${{ env.latest_manifest_url }}
+          DOWNLOAD: ${{ env.release_module_url }}
+
+
+      # Create a "module.zip" archive containing all the module's required files.
+      # If you have other directories or files that will need to be added to
+      # your packaged module, add them here.
+      - name: Create Module Archive
         run: |
-          echo "❌ Release creation failed, but package was created:"
-          ls -la *.zip
-          echo "You can manually upload the package to the release." 
+          # Note that `zip` will only emit warnings when a file or directory
+          # doesn't exist, it will not fail.
+          zip                                    \
+            `# Options`                          \
+            --recurse-paths                      \
+            `# The name of the output file`      \
+             ./module.zip                        \
+            `# The files that will be included.` \
+            module.json                          \
+            README.md                            \
+            LICENSE                              \
+            templates/                           \
+            scripts/                             \
+            styles/                              \
+            lang/                                \
+            assets/                              \
+            campaign_settings/
+          # Don't forget to add a backslash at the end of the line for any
+          # additional files or directories!
+
+
+      # Update the GitHub release with the manifest and module archive files.
+      - name: Update Release With Files
+        id: create_version_release
+        uses: ncipollo/release-action@v1
+        with:
+          allowUpdates: true
+          name: ${{ github.event.release.name }}
+          draft: ${{ github.event.release.unpublished }}
+          prerelease: ${{ github.event.release.prerelease }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          artifacts: './module.json, ./module.zip'
+          tag: ${{ github.event.release.tag_name }}
+          body: ${{ github.event.release.body }}
