@@ -20,22 +20,16 @@ class DarkSunChatCommands {
     async initialize() {
         if (this.initialized) return;
         
-        console.log('🌞 Dark Sun Calendar | Initializing chat commands...');
-        
         // Wait for Chat Commander to be ready via the hook
         Hooks.on("chatCommandsReady", (commands) => {
-            console.log('🌞 Dark Sun Calendar | Chat Commander ready, registering commands...');
             this.registerCommands(commands);
             this.initialized = true;
-            console.log('🌞 Dark Sun Calendar | Chat commands initialized successfully');
         });
         
         // If Chat Commander is already ready, try to register immediately
         if (game.chatCommands?.register) {
-            console.log('🌞 Dark Sun Calendar | Chat Commander already available, registering commands...');
             this.registerCommands(game.chatCommands);
             this.initialized = true;
-            console.log('🌞 Dark Sun Calendar | Chat commands initialized successfully');
         }
     }
 
@@ -180,7 +174,8 @@ class DarkSunChatCommands {
                     
                     // Check GM permission if required
                     if (config.gmOnly && !game.user?.isGM) {
-                        return this.createErrorResponse('This command is only available to GMs.');
+                        const errorResult = this.createErrorResponse('This command is only available to GMs.');
+                        return errorResult;
                     }
                     
                     // Call the original callback with args
@@ -189,38 +184,32 @@ class DarkSunChatCommands {
                     // Handle both sync and async responses
                     if (result && typeof result.then === 'function') {
                         return result.then(response => {
-                            console.log(`🌞 Dark Sun Calendar | /${name} async response:`, response);
-                            // Ensure response is a proper ChatMessage object
-                            if (typeof response === 'object' && response !== null) {
-                                return response;
-                            }
-                            return { content: response || 'Command executed successfully' };
+                            return response; // Return response as-is since our handlers return proper objects
                         }).catch(error => {
-                            console.error(`🌞 Dark Sun Calendar | Error in /${name} command:`, error);
                             return this.createErrorResponse('Command execution failed');
                         });
                     }
                     
                     // Handle sync responses
-                    console.log(`🌞 Dark Sun Calendar | /${name} sync response:`, result);
-                    // Ensure response is a proper ChatMessage object
-                    if (typeof result === 'object' && result !== null) {
-                        return result;
-                    }
-                    return { content: result || 'Command executed successfully' };
+                    return result; // Return result as-is since our handlers return proper objects
                 } catch (error) {
-                    console.error(`🌞 Dark Sun Calendar | Error in /${name} command:`, error);
-                    return this.createErrorResponse('Command execution failed');
+                    const errorResult = this.createErrorResponse('Command execution failed');
+                    return errorResult;
                 }
             },
             // Add autocomplete support for better UX
             autocompleteCallback: (existingText, chat, messageData) => {
-                // Basic autocomplete - could be enhanced based on command
+                // Basic autocomplete - now returns <li> elements for suggestions
                 if (config.examples && config.examples.length > 0) {
-                    return config.examples.map(example => ({
-                        text: example.replace(`/${name}`, '').trim(),
-                        description: config.description
-                    }));
+                    return config.examples.map(example => {
+                        const param = example.replace(`/${name}`, '').trim();
+                        const el = document.createElement("li");
+                        el.className = "context-item command";
+                        el.tabIndex = 0;
+                        el.dataset.command = param;
+                        el.innerHTML = `<strong>${param}</strong> <span class="notes">${config.description}</span>`;
+                        return el;
+                    });
                 }
                 return [];
             }
@@ -229,9 +218,8 @@ class DarkSunChatCommands {
         try {
             commands.register(commandConfig);
             this.commands.set(name, commandConfig);
-            console.log(`🌞 Dark Sun Calendar | Registered command: /${name}`);
         } catch (error) {
-            console.error(`🌞 Dark Sun Calendar | Failed to register command /${name}:`, error);
+            // console.error(`🌞 Dark Sun Calendar | Failed to register command /${name}:`, error);
         }
     }
 
@@ -242,7 +230,7 @@ class DarkSunChatCommands {
     /**
      * Handle /dsc-test command
      */
-    async handleTestCommand(args) {
+    handleTestCommand(args) {
         const message = args.length > 0 ? args.join(' ') : 'Test successful!';
         
         let response = `<h3>🧪 Dark Sun Calendar Test</h3>`;
@@ -250,16 +238,13 @@ class DarkSunChatCommands {
         response += `<p><strong>DSC Ready:</strong> ${window.DSC?.isReady ? window.DSC.isReady() : 'false'}</p>`;
         response += `<p><strong>Args:</strong> ${JSON.stringify(args)}</p>`;
         
-        console.log('🌞 Dark Sun Calendar | Test command executed:', { message, args });
-        console.log('🌞 Dark Sun Calendar | Test command response:', response);
-        
         return this.sendMessage(response);
     }
 
     /**
      * Handle /date command
      */
-    async handleDateCommand(args) {
+    handleDateCommand(args) {
         const readyCheck = this.checkDSCReady();
         if (readyCheck) return readyCheck;
 
@@ -283,7 +268,6 @@ class DarkSunChatCommands {
 
             return this.sendMessage(message);
         } catch (error) {
-            console.error('🌞 Dark Sun Calendar | Error in /date command:', error);
             return this.sendErrorMessage('Error getting date information');
         }
     }
@@ -291,7 +275,7 @@ class DarkSunChatCommands {
     /**
      * Handle /time command
      */
-    async handleTimeCommand(args) {
+    handleTimeCommand(args) {
         const readyCheck = this.checkDSCReady();
         if (readyCheck) return readyCheck;
 
@@ -309,7 +293,6 @@ class DarkSunChatCommands {
 
             return this.sendMessage(message);
         } catch (error) {
-            console.error('🌞 Dark Sun Calendar | Error in /time command:', error);
             return this.sendErrorMessage('Error getting time information');
         }
     }
@@ -317,7 +300,7 @@ class DarkSunChatCommands {
     /**
      * Handle /year command
      */
-    async handleYearCommand(args) {
+    handleYearCommand(args) {
         const readyCheck = this.checkDSCReady();
         if (readyCheck) return readyCheck;
 
@@ -351,7 +334,6 @@ class DarkSunChatCommands {
 
             return this.sendMessage(message);
         } catch (error) {
-            console.error('🌞 Dark Sun Calendar | Error in /year command:', error);
             return this.sendErrorMessage('Error getting year information');
         }
     }
@@ -359,7 +341,7 @@ class DarkSunChatCommands {
     /**
      * Handle /day command
      */
-    async handleDayCommand(args) {
+    handleDayCommand(args) {
         const readyCheck = this.checkDSCReady();
         if (readyCheck) return readyCheck;
 
@@ -400,7 +382,6 @@ class DarkSunChatCommands {
 
             return this.sendMessage(message);
         } catch (error) {
-            console.error('🌞 Dark Sun Calendar | Error in /day command:', error);
             return this.sendErrorMessage('Error getting day information');
         }
     }
@@ -475,7 +456,6 @@ class DarkSunChatCommands {
                 return this.sendErrorMessage('Failed to advance time');
             }
         } catch (error) {
-            console.error('🌞 Dark Sun Calendar | Error in /advance command:', error);
             return this.sendErrorMessage('Error advancing time');
         }
     }
@@ -510,21 +490,20 @@ class DarkSunChatCommands {
                 return this.sendErrorMessage('Day must be between 1 and 30');
             }
 
-            const success = window.DSC.setKingsAgeDate(kingsAge, kingsAgeYear, month, day);
-            
+            // Await in case setKingsAgeDate is async
+            const success = await window.DSC.setKingsAgeDate(kingsAge, kingsAgeYear, month, day);
             if (success) {
+                // Optionally, add a short delay if needed for the date to update
+                // await new Promise(resolve => setTimeout(resolve, 10));
                 const currentDate = window.DSC.getCurrentDate();
                 const formattedDate = window.DSC.formatDarkSunDate(currentDate);
-                
                 let message = `<h3>📅 Date Set</h3>`;
                 message += `<p><strong>New Date:</strong> ${formattedDate}</p>`;
-                
                 return this.sendMessage(message);
             } else {
                 return this.sendErrorMessage('Failed to set date');
             }
         } catch (error) {
-            console.error('🌞 Dark Sun Calendar | Error in /set-date command:', error);
             return this.sendErrorMessage('Error setting date');
         }
     }
@@ -562,7 +541,6 @@ class DarkSunChatCommands {
                 return this.sendErrorMessage('Failed to jump to day');
             }
         } catch (error) {
-            console.error('🌞 Dark Sun Calendar | Error in /goto command:', error);
             return this.sendErrorMessage('Error jumping to day');
         }
     }
@@ -570,7 +548,7 @@ class DarkSunChatCommands {
     /**
      * Handle /moons command
      */
-    async handleMoonsCommand(args) {
+    handleMoonsCommand(args) {
         const readyCheck = this.checkDSCReady();
         if (readyCheck) return readyCheck;
 
@@ -598,7 +576,6 @@ class DarkSunChatCommands {
 
             return this.sendMessage(message);
         } catch (error) {
-            console.error('🌞 Dark Sun Calendar | Error in /moons command:', error);
             return this.sendErrorMessage('Error getting moon phase information');
         }
     }
@@ -606,7 +583,7 @@ class DarkSunChatCommands {
     /**
      * Handle /eclipse command
      */
-    async handleEclipseCommand(args) {
+    handleEclipseCommand(args) {
         const readyCheck = this.checkDSCReady();
         if (readyCheck) return readyCheck;
 
@@ -630,6 +607,11 @@ class DarkSunChatCommands {
                     const nextEclipse = window.DSC.findNextEclipse();
                     if (nextEclipse) {
                         message += `<p><strong>Next Eclipse:</strong> ${nextEclipse.description}</p>`;
+                        if (nextEclipse.absoluteDay !== undefined) {
+                            const dateObj = window.DSC.fromAbsoluteDays(nextEclipse.absoluteDay);
+                            const formattedDate = window.DSC.formatDarkSunDate(dateObj);
+                            message += `<p><strong>Date:</strong> ${formattedDate}</p>`;
+                        }
                     } else {
                         message += `<p>No upcoming eclipse found.</p>`;
                     }
@@ -637,6 +619,11 @@ class DarkSunChatCommands {
                     const previousEclipse = window.DSC.findPreviousEclipse();
                     if (previousEclipse) {
                         message += `<p><strong>Previous Eclipse:</strong> ${previousEclipse.description}</p>`;
+                        if (previousEclipse.absoluteDay !== undefined) {
+                            const dateObj = window.DSC.fromAbsoluteDays(previousEclipse.absoluteDay);
+                            const formattedDate = window.DSC.formatDarkSunDate(dateObj);
+                            message += `<p><strong>Date:</strong> ${formattedDate}</p>`;
+                        }
                     } else {
                         message += `<p>No previous eclipse found.</p>`;
                     }
@@ -645,7 +632,6 @@ class DarkSunChatCommands {
 
             return this.sendMessage(message);
         } catch (error) {
-            console.error('🌞 Dark Sun Calendar | Error in /eclipse command:', error);
             return this.sendErrorMessage('Error getting eclipse information');
         }
     }
@@ -653,7 +639,7 @@ class DarkSunChatCommands {
     /**
      * Handle /season command
      */
-    async handleSeasonCommand(args) {
+    handleSeasonCommand(args) {
         const readyCheck = this.checkDSCReady();
         if (readyCheck) return readyCheck;
 
@@ -681,7 +667,6 @@ class DarkSunChatCommands {
 
             return this.sendMessage(message);
         } catch (error) {
-            console.error('🌞 Dark Sun Calendar | Error in /season command:', error);
             return this.sendErrorMessage('Error getting season information');
         }
     }
@@ -689,7 +674,7 @@ class DarkSunChatCommands {
     /**
      * Handle /kings-age command
      */
-    async handleKingsAgeCommand(args) {
+    handleKingsAgeCommand(args) {
         const readyCheck = this.checkDSCReady();
         if (readyCheck) return readyCheck;
 
@@ -718,7 +703,6 @@ class DarkSunChatCommands {
 
             return this.sendMessage(message);
         } catch (error) {
-            console.error('🌞 Dark Sun Calendar | Error in /kings-age command:', error);
             return this.sendErrorMessage('Error converting to King\'s Age format');
         }
     }
@@ -726,7 +710,7 @@ class DarkSunChatCommands {
     /**
      * Handle /free-year command
      */
-    async handleFreeYearCommand(args) {
+    handleFreeYearCommand(args) {
         const readyCheck = this.checkDSCReady();
         if (readyCheck) return readyCheck;
 
@@ -752,7 +736,6 @@ class DarkSunChatCommands {
 
             return this.sendMessage(message);
         } catch (error) {
-            console.error('🌞 Dark Sun Calendar | Error in /free-year command:', error);
             return this.sendErrorMessage('Error converting to Free Year');
         }
     }
@@ -760,7 +743,7 @@ class DarkSunChatCommands {
     /**
      * Handle /calendar command
      */
-    async handleCalendarCommand(args) {
+    handleCalendarCommand(args) {
         const readyCheck = this.checkDSCReady();
         if (readyCheck) return readyCheck;
 
@@ -780,7 +763,6 @@ class DarkSunChatCommands {
                     return this.sendMessage('📅 Calendar widget toggled');
             }
         } catch (error) {
-            console.error('🌞 Dark Sun Calendar | Error in /calendar command:', error);
             return this.sendErrorMessage('Error controlling calendar widget');
         }
     }
@@ -788,7 +770,7 @@ class DarkSunChatCommands {
     /**
      * Handle /events command
      */
-    async handleEventsCommand(args) {
+    handleEventsCommand(args) {
         const readyCheck = this.checkDSCReady();
         if (readyCheck) return readyCheck;
 
@@ -810,7 +792,6 @@ class DarkSunChatCommands {
 
             return this.sendMessage(message);
         } catch (error) {
-            console.error('🌞 Dark Sun Calendar | Error in /events command:', error);
             return this.sendErrorMessage('Error getting historical events');
         }
     }
@@ -818,7 +799,7 @@ class DarkSunChatCommands {
     /**
      * Handle /timeline command
      */
-    async handleTimelineCommand(args) {
+    handleTimelineCommand(args) {
         const readyCheck = this.checkDSCReady();
         if (readyCheck) return readyCheck;
 
@@ -830,7 +811,6 @@ class DarkSunChatCommands {
 
             return this.sendMessage(message);
         } catch (error) {
-            console.error('🌞 Dark Sun Calendar | Error in /timeline command:', error);
             return this.sendErrorMessage('Error getting timeline information');
         }
     }

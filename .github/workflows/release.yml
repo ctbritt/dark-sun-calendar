@@ -1,0 +1,160 @@
+name: Release Dark Sun Calendar Module
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 13.0.0)'
+        required: true
+        type: string
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          
+      - name: Get version
+        id: get_version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            # Extract version from tag (remove 'v' prefix)
+            VERSION=${GITHUB_REF#refs/tags/v}
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+          fi
+          
+      - name: Validate module.json
+        run: |
+          # Check if module.json exists and is valid JSON
+          if [ ! -f "module.json" ]; then
+            echo "❌ module.json not found"
+            exit 1
+          fi
+          
+          # Validate JSON syntax
+          if ! jq empty module.json 2>/dev/null; then
+            echo "❌ module.json is not valid JSON"
+            exit 1
+          fi
+          
+          # Check if version in module.json matches release version
+          MODULE_VERSION=$(jq -r '.version' module.json)
+          RELEASE_VERSION="${{ steps.get_version.outputs.version }}"
+          
+          if [ "$MODULE_VERSION" != "$RELEASE_VERSION" ]; then
+            echo "❌ Version mismatch: module.json has $MODULE_VERSION, but releasing $RELEASE_VERSION"
+            echo "Please update module.json version to match the release version"
+            exit 1
+          fi
+          
+          echo "✅ module.json validation passed"
+          echo "📦 Module version: $MODULE_VERSION"
+          
+      - name: Create release package
+        run: |
+          VERSION="${{ steps.get_version.outputs.version }}"
+          PACKAGE_NAME="dark-sun-calendar-$VERSION.zip"
+          
+          # Create zip file excluding unnecessary files
+          zip -r "$PACKAGE_NAME" . \
+            -x "*.git*" \
+            -x ".DS_Store" \
+            -x ".claude/*" \
+            -x ".specstory/*" \
+            -x "test-*.js" \
+            -x "macro-example.js" \
+            -x "*.log" \
+            -x "node_modules/*" \
+            -x ".github/*" \
+            -x "README.md" \
+            -x "CHANGELOG.md" \
+            -x "LICENSE" \
+            -x ".gitignore"
+            
+          echo "📦 Created package: $PACKAGE_NAME"
+          echo "package_name=$PACKAGE_NAME" >> $GITHUB_OUTPUT
+          
+      - name: Get release notes
+        id: get_release_notes
+        run: |
+          # Try to get release notes from CHANGELOG.md if it exists
+          if [ -f "CHANGELOG.md" ]; then
+            # Extract section for this version
+            VERSION="${{ steps.get_version.outputs.version }}"
+            RELEASE_NOTES=$(awk -v version="$VERSION" '
+              /^## \[?v?'"$VERSION"'\]?/ { p=1; next }
+              /^## \[?v?[0-9]/ { p=0 }
+              p { print }
+            ' CHANGELOG.md | sed '/^$/d')
+            
+            if [ -n "$RELEASE_NOTES" ]; then
+              echo "release_notes<<EOF" >> $GITHUB_OUTPUT
+              echo "$RELEASE_NOTES" >> $GITHUB_OUTPUT
+              echo "EOF" >> $GITHUB_OUTPUT
+            else
+              echo "release_notes=Release $VERSION of Dark Sun Calendar module for Foundry VTT." >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "release_notes=Release ${{ steps.get_version.outputs.version }} of Dark Sun Calendar module for Foundry VTT." >> $GITHUB_OUTPUT
+          fi
+          
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: ${{ steps.create_release_package.outputs.package_name }}
+          tag_name: v${{ steps.get_version.outputs.version }}
+          name: Dark Sun Calendar v${{ steps.get_version.outputs.version }}
+          body: |
+            ## Dark Sun Calendar v${{ steps.get_version.outputs.version }}
+            
+            ${{ steps.get_release_notes.outputs.release_notes }}
+            
+            ### Installation
+            
+            1. Download the `dark-sun-calendar-${{ steps.get_version.outputs.version }}.zip` file
+            2. Extract it to your Foundry VTT `Data/modules/` directory
+            3. Restart Foundry VTT
+            4. Enable the module in your world settings
+            
+            ### Requirements
+            
+            - Foundry VTT v13+
+            - Seasons & Stars module (required)
+            
+            ### Features
+            
+            - Complete Athasian calendar system with King's Ages
+            - Lunar cycles for Ral and Guthay
+            - Eclipse calculations and predictions
+            - Historical events timeline
+            - Chat commands for calendar operations
+            - Calendar grid widget
+            - Free Year conversion utilities
+            
+            ### Changes
+            
+            See the [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for detailed changes.
+            
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Upload package to release
+        if: failure()
+        run: |
+          echo "❌ Release creation failed, but package was created:"
+          ls -la *.zip
+          echo "You can manually upload the package to the release." 

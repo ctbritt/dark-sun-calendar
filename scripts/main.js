@@ -1137,38 +1137,44 @@ class DarkSunCalendar {
      * Format: "Xst/nd/rd/th year of King's Age Y, Year of [YearName]"
      */
     formatDarkSunDate(date) {
-        // If no date specified, use current date
         if (!date) {
             date = this.getCurrentDate();
-            if (!date) {
-                console.error('🌞 Dark Sun Calendar | formatDarkSunDate: Could not get current date');
-                return "Unknown Date";
-            }
+            if (!date) return "Unknown Date";
         }
-        
-        // Handle CalendarDate objects by converting to plain object
+
         let dateObject = date;
         if (date.toObject && typeof date.toObject === 'function') {
             dateObject = date.toObject();
         }
-        
-        // Validate required date properties
-        if (typeof dateObject.year !== 'number') {
-            console.error('🌞 Dark Sun Calendar | formatDarkSunDate: Invalid date object structure:', dateObject);
-            return "Unknown Date";
+
+        // Prefer properties from the date object if available
+        const kingsAge = dateObject.kingsAge !== undefined ? dateObject.kingsAge : this.getKingsAge(dateObject.year);
+        const kingsAgeYear = dateObject.kingsAgeYear !== undefined ? dateObject.kingsAgeYear : this.getKingsAgeYear(dateObject.year);
+        const yearName = dateObject.yearName || this.getYearName(dateObject.year);
+
+        // Get month name
+        let monthName = "Unknown";
+        if (dateObject.calendar && dateObject.month && dateObject.calendar.months) {
+            monthName = dateObject.calendar.months[dateObject.month - 1]?.name || "Unknown";
+        } else if (typeof this.getActiveCalendar === 'function') {
+            const calendar = this.getActiveCalendar();
+            if (calendar && calendar.months && dateObject.month) {
+                monthName = calendar.months[dateObject.month - 1]?.name || "Unknown";
+            }
         }
-        
-        const year = dateObject.year;
-        const kingsAge = this.getKingsAge(year);
-        const kingsAgeYear = this.getKingsAgeYear(year);
-        const yearName = this.getYearName(year);
-        
-        const ordinalSuffix = this.getOrdinalSuffix(kingsAgeYear);
-        
-        const formattedDate = `${kingsAgeYear}${ordinalSuffix} year of King's Age ${kingsAge}, Year of ${yearName}`;
-        
-        
-        return formattedDate;
+
+        // Day with ordinal suffix
+        const day = dateObject.day;
+        let dayOrdinal = day;
+        if (typeof this.getOrdinalSuffix === 'function' && typeof day === 'number') {
+            dayOrdinal = `${day}${this.getOrdinalSuffix(day)}`;
+        }
+
+        if (kingsAge && kingsAgeYear && yearName && monthName && day) {
+            return `${kingsAgeYear}${this.getOrdinalSuffix(kingsAgeYear)} Year of King's Age ${kingsAge}, ${dayOrdinal} of ${monthName}, Year of ${yearName}`;
+        }
+
+        return "Unknown Date";
     }
 
     /**
