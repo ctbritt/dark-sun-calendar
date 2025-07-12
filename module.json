@@ -1,103 +1,46 @@
 {
-    "id": "dimensional-weather",
-    "title": "Dimensional Weather",
-    "description": "A dynamic weather system for Foundry VTT, providing a modular system for developing your own climes, terrains, and atmospheric phenomenon.",
-    "version": "#{VERSION}#",
-    "compatibility": {
-        "minimum": "12",
-        "verified": "13",
-        "maximum": "13"
-    },
+    "id": "dark-sun-calendar",
+    "title": "Dark Sun Calendar",
+    "description": "Complete Athasian calendar system with King's Ages, lunar cycles, and historical events for the Dark Sun campaign setting",
     "authors": [
         {
-            "name": "Christopher Allbritton",
-            "discord": "callbritton",
-            "flags": {}
+            "name": "Dark Sun Calendar",
+            "email": "darksun@calendar.com"
         }
     ],
+    "version": "2.0.0",
+    "compatibility": {
+        "minimum": "13",
+        "verified": "13.345",
+        "maximum": "13"
+    },
     "esmodules": [
-        "scripts/time-utils.js",
-        "scripts/scene-manager.js",
-        "scripts/state-manager.js",
-        "scripts/weather-calculator.js",
-        "scripts/command-system.js",
-        "scripts/main.js"
+        "scripts/athasian-calendar-core.js",
+        "scripts/athasian-moon-engine.js",
+        "scripts/athasian-eclipse-engine.js",
+        "scripts/dark-sun-calendar.js",
+        "scripts/seasons-stars-integration.js",
+        "scripts/dark-sun-calendar-app.js",
+        "scripts/foundry-integration.js"
     ],
     "styles": [
-        "styles/dimensional-weather.css"
+        "styles/dark-sun-calendar.css"
     ],
     "languages": [
         {
             "lang": "en",
             "name": "English",
-            "path": "lang/en.json",
-            "flags": {}
-        },
-        {
-            "lang": "es",
-            "name": "Español",
-            "path": "lang/es.json",
-            "flags": {}
-        },
-        {
-            "lang": "fr",
-            "name": "Français",
-            "path": "lang/fr.json",
-            "flags": {}
-        },
-        {
-            "lang": "uk",
-            "name": "Українська",
-            "path": "lang/uk.json",
-            "flags": {}
+            "path": "lang/en.json"
         }
     ],
-    "url": "#{URL}#",
-    "manifest": "#{MANIFEST}#",
-    "download": "#{DOWNLOAD}#",
-    "license": "MIT",
-    "readme": "README.md",
-    "bugs": "https://github.com/ctbritt/dimensional-weather/issues",
-    "changelog": "CHANGELOG.md",
-    "socket": false,
+    "url": "https://github.com/ctbritt/dark-sun-calendar",
+    "manifest": "https://github.com/ctbritt/dark-sun-calendar/releases/latest/download/module.json",
+    "download": "https://github.com/ctbritt/dark-sun-calendar/releases/latest/download/dark-sun-calendar.zip",
     "relationships": {
         "systems": [
             {
                 "id": "dnd5e",
-                "type": "system",
-                "compatibility": {}
-            }
-        ],
-        "requires": [
-            {
-                "id": "_chatcommands",
-                "type": "module",
-                "manifest": "https://gitlab.com/woodentavern/foundryvtt-chat-command-lib/-/raw/master/src/module.json",
-                "compatibility": {
-                    "verified": "2.0.1"
-                }
-            },
-            {
-                "id": "about-time",
-                "type": "module",
-                "compatibility": {}
-            },
-            {
-                "id": "foundryvtt-simple-calendar",
-                "type": "module",
-                "compatibility": {}
-            },
-            {
-                "id": "lib-wrapper",
-                "type": "module",
-                "manifest": "https://github.com/ruipin/fvtt-lib-wrapper/releases/download/v1.12.11.0/module.json",
-                "compatibility": {
-                    "verified": "1.12.11.0"
-                }
-            },
-            {
-                "id": "seasons-and-stars",
-                "type": "module"
+                "type": "optional"
             }
         ]
     }
