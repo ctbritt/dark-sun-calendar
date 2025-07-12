@@ -97,7 +97,37 @@ class DarkSunCalendar {
             }
             
             const calendarData = await response.json();
-            console.log('🌞 Dark Sun Calendar | Successfully loaded local dark-sun.json');
+            
+            // Validate essential calendar structure
+            if (!calendarData.months || !Array.isArray(calendarData.months)) {
+                throw new Error('Calendar data missing or invalid months array');
+            }
+            
+            if (!calendarData.intercalary || !Array.isArray(calendarData.intercalary)) {
+                throw new Error('Calendar data missing or invalid intercalary array');
+            }
+            
+            if (!calendarData.extensions || !calendarData.extensions['seasons-and-stars']) {
+                throw new Error('Calendar data missing seasons-and-stars extension');
+            }
+            
+            // Validate months have required properties
+            for (let i = 0; i < calendarData.months.length; i++) {
+                const month = calendarData.months[i];
+                if (!month.name || typeof month.days !== 'number' || month.days <= 0) {
+                    throw new Error(`Invalid month data at index ${i}: missing name or invalid days`);
+                }
+            }
+            
+            // Validate intercalary periods have required properties
+            for (let i = 0; i < calendarData.intercalary.length; i++) {
+                const inter = calendarData.intercalary[i];
+                if (!inter.name || typeof inter.days !== 'number' || inter.days <= 0 || typeof inter.after !== 'number') {
+                    throw new Error(`Invalid intercalary data at index ${i}: missing name, invalid days, or missing after property`);
+                }
+            }
+            
+            console.log('🌞 Dark Sun Calendar | Successfully loaded and validated local dark-sun.json');
             
             // Register the calendar with Seasons & Stars CalendarManager
             const success = this.seasonsStars.manager.loadCalendar(calendarData);

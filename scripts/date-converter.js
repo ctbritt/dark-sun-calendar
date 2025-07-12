@@ -147,10 +147,11 @@ class AthasianCalendarCore {
             
             remainingDays -= this.DAYS_PER_MONTH;
             
-            // Skip intercalary periods
-            if (month === 4) {
+            // Check for intercalary periods after this month
+            // Note: Intercalary periods are inserted BETWEEN months, not within them
+            if (month === 4 && remainingDays > 5) {
                 remainingDays -= 5; // Skip Cooling Sun
-            } else if (month === 8) {
+            } else if (month === 8 && remainingDays > 5) {
                 remainingDays -= 5; // Skip Soaring Sun
             }
         }
