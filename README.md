@@ -131,8 +131,26 @@ dark-sun-calendar/
 2. Install dependencies: `npm install`
 3. Make your changes
 4. Test in Foundry VTT
-5. Update version in `module.json` and `CHANGELOG.md`
+5. Update version in `CHANGELOG.md`
 6. Create a release tag: `git tag v13.0.1 && git push origin v13.0.1`
+
+### Automatic Version Management
+The module uses GitHub Actions to automatically update version numbers and URLs when you create a release:
+
+1. **Create a Release**: Go to GitHub → Releases → Create a new release
+2. **Tag Version**: Use semantic versioning (e.g., `v2.1.0`)
+3. **Publish**: The workflow will automatically:
+   - Update `module.json` with the new version
+   - Update URLs to point to the specific release
+   - Commit changes back to the repository
+   - Create the release assets
+
+**For Local Development:**
+```bash
+# Update module.json with development values
+node scripts/update-module-version.js [version]
+# Example: node scripts/update-module-version.js 2.1.0-dev
+```
 
 ## Contributing
 
