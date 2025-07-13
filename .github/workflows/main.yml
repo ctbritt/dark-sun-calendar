@@ -73,7 +73,17 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+
+
+      # Debug: Show current directory and files
+      - name: Debug - Show Files
+        run: |
+          echo "Current directory: $(pwd)"
+          echo "Files in current directory:"
+          ls -la
+          echo "Module.json contents:"
+          cat module.json
 
 
       # Extract version embedded in the tag.
@@ -86,6 +96,13 @@ jobs:
       - name: Extract Version From Tag
         id: get_version
         uses: battila7/get-version-action@v2
+
+
+      # Debug: Show extracted version
+      - name: Debug - Show Version
+        run: |
+          echo "Extracted version: ${{ steps.get_version.outputs.version-without-v }}"
+          echo "Tag name: ${{ github.event.release.tag_name }}"
 
 
       # Modify "module.json" with values specific to the release.
@@ -106,6 +123,13 @@ jobs:
           DOWNLOAD: ${{ env.release_module_url }}
 
 
+      # Debug: Show updated module.json
+      - name: Debug - Show Updated Module.json
+        run: |
+          echo "Updated module.json contents:"
+          cat module.json
+
+
       # Commit the updated module.json back to the repository
       - name: Commit Updated Module Manifest
         run: |
@@ -121,8 +145,20 @@ jobs:
       # your packaged module, add them here.
       - name: Create Module Archive
         run: |
-          # Note that `zip` will only emit warnings when a file or directory
-          # doesn't exist, it will not fail.
+          # Check if files exist before zipping
+          echo "Checking if required files exist:"
+          ls -la module.json
+          ls -la README.md
+          ls -la historical_events.json
+          ls -la LICENSE
+          ls -la macro-example.js
+          ls -la templates/
+          ls -la calendar/
+          ls -la scripts/
+          ls -la styles/
+          ls -la lang/
+          
+          # Create the zip file
           zip                                    \
             `# Options`                          \
             --recurse-paths                      \
@@ -141,6 +177,18 @@ jobs:
             lang/                                \
           # Don't forget to add a backslash at the end of the line for any
           # additional files or directories!
+          
+          # Check if zip was created
+          echo "Checking if module.zip was created:"
+          ls -la module.zip
+
+
+      # Debug: Show zip contents
+      - name: Debug - Show Zip Contents
+        run: |
+          echo "Zip file size: $(ls -lh module.zip)"
+          echo "Zip contents:"
+          unzip -l module.zip
 
 
       # Update the GitHub release with the manifest and module archive files.
