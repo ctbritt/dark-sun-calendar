@@ -1,0 +1,32 @@
+{
+    "name": "dark-sun-calendar",
+    "version": "0.0.1",
+    "description": "Dark Sun Calendar for Foundry VTT",
+    "directories": {
+        "doc": "docs"
+    },
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "build": "webpack",
+        "buildCompendiums": "node packData/packData.mjs"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/ctbritt/dark-sun-calendar.git"
+    },
+    "author": "",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/ctbritt/dark-sun-calendar/issues"
+    },
+    "homepage": "https://github.com/ctbritt/dark-sun-calendar#readme",
+    "dependencies": {
+        "@foundryvtt/foundryvtt-cli": "^1.0.2",
+        "terser-webpack-plugin": "^5.3.9",
+        "webpack": "^5.89.0",
+        "webpack-cli": "^5.1.4"
+    },
+    "devDependencies": {
+        "eslint": "^8.57.0"
+    }
+}
