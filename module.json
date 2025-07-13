@@ -3,6 +3,8 @@
     "title": "Dark Sun Calendar",
     "description": "Complete Athasian calendar system with King's Ages, lunar cycles, and historical events for the Dark Sun campaign setting",
     "version": "#{VERSION}#",
+    "library": "false",
+    "manifestPlusVersion": "1.2.0",
     "compatibility": {
         "minimum": "13",
         "maximum": "13"
@@ -33,18 +35,15 @@
             "path": "lang/en.json"
         }
     ],
-    "url": "https://github.com/ctbritt/dark-sun-calendar",
-    "license": "LICENSE",
-    "manifest": "${MANIFEST}#",
+    "url": "#{URL}#",
+    "manifest": "#{MANIFEST}#",
     "download": "#{DOWNLOAD}#",
+    "license": "LICENSE",
     "readme": "README.md",
-    "relationships": {
-        "requires": [
-            {
-                "id": "seasons-and-stars",
-                "type": "module",
-                "compatibility": {}
-            }
-        ]
-    }
+    "media": [
+        {
+            "type": "icon",
+            "url": "https://avatars2.githubusercontent.com/u/71292812?s=400&u=ccdb4eeb7abf551ca8f314e5a9bfd0479a4d3d41&v=4"
+        }
+    ]
 }

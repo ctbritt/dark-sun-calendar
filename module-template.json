@@ -1,50 +1,51 @@
 {
-    "id": "dark-sun-calendar",
-    "title": "Dark Sun Calendar",
-    "description": "Complete Athasian calendar system with King's Ages, lunar cycles, and historical events for the Dark Sun campaign setting",
+    "id": "module",
+    "title": "New Module",
+    "description": "",
     "version": "#{VERSION}#",
+    "library": "false",
+    "manifestPlusVersion": "1.2.0",
     "compatibility": {
-        "minimum": "13",
-        "maximum": "13"
+        "minimum": 10,
+        "verified": 10,
+        "maximum": 11
     },
     "authors": [
         {
-            "name": "Chris Allbritton",
-            "email": "callbritton@mac.com",
-            "url": "https://github.com/ctbritt"
+            "name": "The League of Extraordinary FVTT Developers",
+            "url": "https://github.com/League-of-Foundry-Developers",
+            "discord": "discordID#0001"
         }
     ],
+    "relationships": {
+        "systems": [],
+        "requires": []
+    },
     "esmodules": [
-        "scripts/calendar-grid.js",
-        "scripts/chat-commands.js",
-        "scripts/date-converter.js",
-        "scripts/ds-calendar-date.js",
-        "scripts/eclipse-engine.js",
-        "scripts/main.js",
-        "scripts/moon-engine.js"
+        "scripts/module.js"
+    ],
+    "scripts": [
+        "scripts/lib/lib.js"
     ],
     "styles": [
-        "styles/calendar-grid.css"
+        "styles/module.css"
     ],
     "languages": [
         {
             "lang": "en",
             "name": "English",
-            "path": "lang/en.json"
+            "path": "languages/en.json"
         }
     ],
-    "url": "https://github.com/ctbritt/dark-sun-calendar",
-    "license": "LICENSE",
-    "manifest": "https://github.com/ctbritt/dark-sun-calendar/releases/latest/download/module.json",
+    "url": "#{URL}#",
+    "manifest": "#{MANIFEST}#",
     "download": "#{DOWNLOAD}#",
+    "license": "LICENSE",
     "readme": "README.md",
-    "relationships": {
-        "requires": [
-            {
-                "id": "seasons-and-stars",
-                "type": "module",
-                "compatibility": {}
-            }
-        ]
-    }
+    "media": [
+        {
+            "type": "icon",
+            "url": "https://avatars2.githubusercontent.com/u/71292812?s=400&u=ccdb4eeb7abf551ca8f314e5a9bfd0479a4d3d41&v=4"
+        }
+    ]
 }
