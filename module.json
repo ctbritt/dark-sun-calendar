@@ -8,7 +8,7 @@
             "email": "callbritton@mac.com"
         }
     ],
-    "version": "${{ env.VERSION }}",
+    "version": "2.1.0",
     "compatibility": {
         "minimum": "13",
         "maximum": "13"
@@ -32,9 +32,9 @@
             "path": "lang/en.json"
         }
     ],
-    "url": "${{ env.URL }}",
-    "manifest": "${{ env.MANIFEST }}",
-    "download": "${{ env.DOWNLOAD }}",
+    "url": "https://github.com/ctbritt/dark-sun-calendar",
+    "manifest": "https://github.com/ctbritt/dark-sun-calendar/releases/download/v2.1.0/module.json",
+    "download": "https://github.com/ctbritt/dark-sun-calendar/releases/download/v2.1.0/module.zip",
     "relationships": {
         "requires": [
             {

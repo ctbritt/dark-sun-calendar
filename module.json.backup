@@ -1,0 +1,47 @@
+{
+    "id": "dark-sun-calendar",
+    "title": "Dark Sun Calendar",
+    "description": "Complete Athasian calendar system with King's Ages, lunar cycles, and historical events for the Dark Sun campaign setting",
+    "authors": [
+        {
+            "name": "Dark Sun Calendar",
+            "email": "callbritton@mac.com"
+        }
+    ],
+    "version": "${{ env.VERSION }}",
+    "compatibility": {
+        "minimum": "13",
+        "maximum": "13"
+    },
+    "esmodules": [
+        "scripts/athasian-calendar-core.js",
+        "scripts/athasian-moon-engine.js",
+        "scripts/athasian-eclipse-engine.js",
+        "scripts/dark-sun-calendar.js",
+        "scripts/seasons-stars-integration.js",
+        "scripts/dark-sun-calendar-app.js",
+        "scripts/foundry-integration.js"
+    ],
+    "styles": [
+        "styles/dark-sun-calendar.css"
+    ],
+    "languages": [
+        {
+            "lang": "en",
+            "name": "English",
+            "path": "lang/en.json"
+        }
+    ],
+    "url": "${{ env.URL }}",
+    "manifest": "${{ env.MANIFEST }}",
+    "download": "${{ env.DOWNLOAD }}",
+    "relationships": {
+        "requires": [
+            {
+                "id": "seasons-and-stars",
+                "type": "module",
+                "compatibility": {}
+            }
+        ]
+    }
+}
