@@ -2,17 +2,18 @@
     "id": "dark-sun-calendar",
     "title": "Dark Sun Calendar",
     "description": "Complete Athasian calendar system with King's Ages, lunar cycles, and historical events for the Dark Sun campaign setting",
-    "authors": [
-        {
-            "name": "Dark Sun Calendar",
-            "email": "callbritton@mac.com"
-        }
-    ],
-    "version": "${{ env.VERSION }}",
+    "version": "#{VERSION}#",
     "compatibility": {
         "minimum": "13",
         "maximum": "13"
     },
+    "authors": [
+        {
+            "name": "Chris Allbritton",
+            "email": "callbritton@mac.com",
+            "url": "https://github.com/ctbritt"
+        }
+    ],
     "esmodules": [
         "scripts/calendar-grid.js",
         "scripts/chat-commands.js",
@@ -32,9 +33,11 @@
             "path": "lang/en.json"
         }
     ],
-    "url": "${{ env.URL }}",
-    "manifest": "${{ env.MANIFEST }}",
-    "download": "${{ env.DOWNLOAD }}",
+    "url": "https://github.com/ctbritt/dark-sun-calendar",
+    "license": "LICENSE",
+    "manifest": "https://github.com/ctbritt/dark-sun-calendar/releases/latest/download/module.json",
+    "download": "#{DOWNLOAD}#",
+    "readme": "README.md",
     "relationships": {
         "requires": [
             {
