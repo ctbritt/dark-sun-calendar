@@ -41,6 +41,63 @@ class DarkSunCalendarGridWidget extends foundry.applications.api.HandlebarsAppli
     }
     
     /**
+     * Calculate season for a given month
+     * @param {number} month - Month number (1-12)
+     * @returns {object} Season information
+     */
+    calculateSeasonForMonth(month) {
+        // Dark Sun seasonal mapping:
+        // Months 11-12, 1-2: High Sun (days 311-375, 1-60)
+        // Months 3-6: Sun Descending (days 61-185)
+        // Months 7-10: Sun Ascending (days 186-310)
+        
+        let seasonName = '';
+        let startDay = 0;
+        let endDay = 0;
+        
+        if (month >= 11 || month <= 2) {
+            seasonName = 'High Sun';
+            startDay = 311;
+            endDay = 60;
+        } else if (month >= 3 && month <= 6) {
+            seasonName = 'Sun Descending';
+            startDay = 61;
+            endDay = 185;
+        } else if (month >= 7 && month <= 10) {
+            seasonName = 'Sun Ascending';
+            startDay = 186;
+            endDay = 310;
+        } else {
+            // Fallback
+            seasonName = 'Unknown';
+            startDay = 0;
+            endDay = 0;
+        }
+        
+        return {
+            name: seasonName,
+            description: this.getSeasonDescription(seasonName),
+            startDay: startDay,
+            endDay: endDay,
+            month: month
+        };
+    }
+    
+    /**
+     * Get season description
+     * @param {string} seasonName - Name of the season
+     * @returns {string} Season description
+     */
+    getSeasonDescription(seasonName) {
+        const descriptions = {
+            'High Sun': 'The most brutal season when the crimson sun reaches its peak intensity, scorching the land and making survival nearly impossible.',
+            'Sun Descending': 'The sun begins its slow retreat, offering brief respite from the most intense heat, though conditions remain harsh.',
+            'Sun Ascending': 'The sun grows stronger again, temperatures rise, and the land becomes increasingly inhospitable.'
+        };
+        return descriptions[seasonName] || '';
+    }
+
+    /**
      * Prepare rendering context for template
      */
     async _prepareContext(options = {}) {
@@ -82,6 +139,10 @@ class DarkSunCalendarGridWidget extends foundry.applications.api.HandlebarsAppli
         else {
             uiHint = 'Click dates to view details.';
         }
+        
+        // Calculate season for the viewed month
+        const seasonInfo = this.calculateSeasonForMonth(this.viewDate.month);
+        
         return Object.assign(context, {
             calendar: calendarInfo,
             viewDate: this.viewDate,
@@ -101,6 +162,8 @@ class DarkSunCalendarGridWidget extends foundry.applications.api.HandlebarsAppli
             // Add intercalary information for template
             hasIntercalary: monthData.intercalaryDays && monthData.intercalaryDays.length > 0,
             intercalaryDays: monthData.intercalaryDays || [],
+            // Add season information for template
+            seasonInfo: seasonInfo,
         });
     }
     
@@ -701,30 +764,29 @@ class DarkSunCalendarGridWidget extends foundry.applications.api.HandlebarsAppli
     }
     
     /**
-     * Set the current date (extracted from _onSelectDate for reuse)
+     * DSC: Track the current date as { year, dayOfYear }
+     */
+    _currentDSCDate = null;
+
+    /**
+     * Set the current date (handles both regular and intercalary days)
      */
     async setCurrentDate(target) {
         const manager = game.seasonsStars?.manager;
         const engine = manager?.getActiveEngine();
-        if (!manager || !engine)
-            return;
-            
-        // Use our own DSCalendarDate class
+        if (!manager || !engine) return;
         const CalendarDate = window.DSCalendarDate;
         if (!CalendarDate) {
             console.error('🌞 DSC: DSCalendarDate class not available');
             ui.notifications?.error('DSCalendarDate class not loaded');
             return;
         }
-        
-        // Get current date from SS manager for reference
         const currentDate = manager.getCurrentDate();
         if (!currentDate) {
             console.error('🌞 DSC: Cannot get current date from SS manager');
             ui.notifications?.error('Calendar system not ready');
             return;
         }
-        
         try {
             // Check if this is an intercalary day
             const calendarDay = target.closest('.calendar-day');
@@ -732,64 +794,49 @@ class DarkSunCalendarGridWidget extends foundry.applications.api.HandlebarsAppli
             let targetDate;
             if (isIntercalary) {
                 // Handle intercalary day selection
-                const intercalaryName = target.dataset.day; // For intercalary days, day contains the name
+                const intercalaryName = target.dataset.day;
                 const intercalaryDay = parseInt(target.dataset.intercalaryDay, 10) || 1;
-                if (!intercalaryName)
-                    return;
-                // Find the intercalary day definition to determine which month it comes after
+                if (!intercalaryName) return;
                 const calendar = engine.getCalendar();
                 const intercalaryDef = calendar.intercalary?.find(i => i.name === intercalaryName);
-                if (!intercalaryDef)
-                    return;
+                if (!intercalaryDef) return;
                 // Calculate the correct dayOfYear for this intercalary period
                 let dayOfYear;
                 if (intercalaryName === "Cooling Sun") {
-                    dayOfYear = 121 + (intercalaryDay - 1); // Days 121-125
+                    dayOfYear = 121 + (intercalaryDay - 1);
                 } else if (intercalaryName === "Soaring Sun") {
-                    dayOfYear = 246 + (intercalaryDay - 1); // Days 246-250
+                    dayOfYear = 246 + (intercalaryDay - 1);
                 } else if (intercalaryName === "Highest Sun") {
-                    dayOfYear = 371 + (intercalaryDay - 1); // Days 371-375
+                    dayOfYear = 371 + (intercalaryDay - 1);
                 } else {
                     console.error('🌞 DSC: Unknown intercalary period:', intercalaryName);
                     return;
                 }
-                const targetDateData = {
-                    year: this.viewDate.year,
-                    dayOfYear: dayOfYear, // Add the calculated dayOfYear
-                    intercalary: intercalaryName,
-                    intercalaryDay: intercalaryDay,
-                    weekday: 0, // Intercalary days don't have weekdays
-                    time: currentDate?.time || { hour: 0, minute: 0, second: 0 },
-                    // month and day intentionally omitted for intercalary days
-                };
-                targetDate = new CalendarDate(targetDateData, calendar);
-                const afterMonthIndex = calendar.months.findIndex(m => m.name === intercalaryDef.after);
-                const safeDateForAPI = {
-                    ...targetDateData,
-                    month: afterMonthIndex + 1, // Provide numeric month for API
-                    day: intercalaryDay // Provide numeric day for API
-                };
-                const afterMonthName = intercalaryDef.after || 'Unknown';
-                const yearDisplay = this.formatYear(this.viewDate.year);
-                ui.notifications?.info(`Date set to ${intercalaryName} Day ${intercalaryDay} (intercalary day after ${afterMonthName} ${yearDisplay})`);
-                await manager.setCurrentDate(safeDateForAPI);
-            }
-            else {
+                // Update DSC's internal date state
+                this._currentDSCDate = { year: this.viewDate.year, dayOfYear };
+                // Optionally persist in world settings
+                game.settings.set('dark-sun-calendar', 'currentDSCDate', this._currentDSCDate);
+                // Update the UI
+                this.render();
+                ui.notifications?.info(`Date set to ${intercalaryName} Day ${intercalaryDay}, Year ${this.viewDate.year}`);
+                Hooks.callAll('dark-sun-calendar:dateChanged', this._currentDSCDate);
+                return;
+            } else {
                 // Handle regular day selection
                 const day = parseInt(target.dataset.day || '0');
-                if (day < 1)
-                    return;
-                
-                // Calculate dayOfYear for regular days
+                if (day < 1) return;
                 const dayOfYear = this.calculateDayOfYear(this.viewDate.month, day, this.viewDate.year);
-                
+                this._currentDSCDate = { year: this.viewDate.year, dayOfYear };
+                // Optionally persist in world settings
+                game.settings.set('dark-sun-calendar', 'currentDSCDate', this._currentDSCDate);
+                // Call SS as usual
                 const targetDateData = {
                     year: this.viewDate.year,
                     month: this.viewDate.month,
                     day: day,
                     weekday: engine.calculateWeekday(this.viewDate.year, this.viewDate.month, day),
                     time: currentDate?.time || { hour: 0, minute: 0, second: 0 },
-                    dayOfYear: dayOfYear, // Add the calculated dayOfYear
+                    dayOfYear: dayOfYear,
                 };
                 const calendar = engine.getCalendar();
                 targetDate = new CalendarDate(targetDateData, calendar);
@@ -798,17 +845,37 @@ class DarkSunCalendarGridWidget extends foundry.applications.api.HandlebarsAppli
                 const yearDisplay = this.formatYear(targetDate.year);
                 ui.notifications?.info(`Date set to ${dayWithSuffix} of ${monthName}, ${yearDisplay}`);
                 await manager.setCurrentDate(targetDate);
+                this.render();
+                Hooks.callAll('dark-sun-calendar:dateChanged', this._currentDSCDate);
             }
-            // Update view date to selected date
-            this.viewDate = targetDate;
-            this.render();
-        }
-        catch (error) {
+        } catch (error) {
             console.error('Failed to set date', error);
             ui.notifications?.error('Failed to set date');
         }
     }
     
+    /**
+     * Advance days (handles both regular and intercalary days)
+     */
+    advanceDays(days = 1) {
+        if (!this._currentDSCDate) return;
+        let { year, dayOfYear } = this._currentDSCDate;
+        dayOfYear += days;
+        while (dayOfYear > 375) {
+            dayOfYear -= 375;
+            year += 1;
+        }
+        while (dayOfYear < 1) {
+            dayOfYear += 375;
+            year -= 1;
+        }
+        this._currentDSCDate = { year, dayOfYear };
+        // Optionally persist in world settings
+        game.settings.set('dark-sun-calendar', 'currentDSCDate', this._currentDSCDate);
+        this.render();
+        Hooks.callAll('dark-sun-calendar:dateChanged', this._currentDSCDate);
+    }
+
     /**
      * Show information about a specific date without setting it
      */

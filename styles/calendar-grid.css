@@ -271,6 +271,59 @@
 }
 
 /* ========================================
+   SEASON INFORMATION
+   ======================================== */
+
+.dsc-season-info {
+    margin-bottom: var(--dsc-spacing-lg);
+    padding: var(--dsc-spacing-md);
+    background: var(--dsc-bg-secondary);
+    border: 1px solid var(--dsc-border-medium);
+    border-radius: var(--dsc-radius-md);
+    box-shadow: var(--dsc-shadow-sm);
+}
+
+.dsc-season-header {
+    display: flex;
+    align-items: center;
+    gap: var(--dsc-spacing-md);
+    margin-bottom: var(--dsc-spacing-sm);
+}
+
+.dsc-season-header i {
+    color: var(--dsc-accent-sun);
+    font-size: var(--dsc-font-size-lg);
+}
+
+.dsc-season-name {
+    font-weight: bold;
+    font-size: var(--dsc-font-size-lg);
+    color: var(--dsc-text-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.dsc-season-description {
+    margin-left: auto;
+    color: var(--dsc-text-muted);
+    cursor: help;
+}
+
+.dsc-season-description i {
+    font-size: var(--dsc-font-size-sm);
+    color: var(--dsc-text-muted);
+}
+
+.dsc-season-description-full {
+    font-size: var(--dsc-font-size-sm);
+    color: var(--dsc-text-secondary);
+    line-height: 1.4;
+    font-style: italic;
+    padding-top: var(--dsc-spacing-sm);
+    border-top: 1px solid var(--dsc-border-light);
+}
+
+/* ========================================
    WEEKDAY HEADERS
    ======================================== */
 
@@ -646,6 +699,26 @@
     .dsc-year-nav {
         flex-direction: column;
         gap: var(--dsc-spacing-sm);
+    }
+    
+    .dsc-season-info {
+        padding: var(--dsc-spacing-sm);
+        margin-bottom: var(--dsc-spacing-md);
+    }
+    
+    .dsc-season-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--dsc-spacing-sm);
+    }
+    
+    .dsc-season-name {
+        font-size: var(--dsc-font-size-md);
+    }
+    
+    .dsc-season-description {
+        margin-left: 0;
+        align-self: flex-end;
     }
     
     .dsc-day {

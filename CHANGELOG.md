@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Season information display in calendar grid widget
 - Enhanced autocomplete suggestions for chat commands
 - Improved date formatting with full month names
 - Better error handling for missing dependencies

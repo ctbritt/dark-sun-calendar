@@ -16,6 +16,8 @@
                     </button>
                     <div class="dsc-month-info">
                         <div class="dsc-month-name">{{monthName}}</div>
+
+
                         {{#if monthDescription}}
                         <div class="dsc-month-description" title="{{monthDescription}}">
                             <i class="fas fa-info-circle"></i>
@@ -45,6 +47,26 @@
                 </button>
             </div>
         </div>
+
+        {{!-- Season Information --}}
+        {{#if seasonInfo}}
+        <div class="dsc-season-info">
+            <div class="dsc-season-header">
+                <i class="fas fa-sun"></i>
+                <span class="dsc-season-name">{{seasonInfo.name}}</span>
+                {{#if seasonInfo.description}}
+                <div class="dsc-season-description" title="{{seasonInfo.description}}">
+                    <i class="fas fa-info-circle"></i>
+                </div>
+                {{/if}}
+            </div>
+            {{#if seasonInfo.description}}
+            <div class="dsc-season-description-full">
+                <span>{{seasonInfo.description}}</span>
+            </div>
+            {{/if}}
+        </div>
+        {{/if}}
 
         {{!-- Weekday Headers --}}
         <div class="dsc-weekdays" style="--weekday-count: {{weekdays.length}};">
