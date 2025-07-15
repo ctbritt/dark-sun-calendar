@@ -132,7 +132,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: var(--dsc-spacing-xl);
+    margin-bottom: var(--dsc-spacing-sm);
     padding: var(--dsc-spacing-lg);
     background: var(--dsc-bg-secondary);
     border: 1px solid var(--dsc-border-light);
@@ -275,8 +275,8 @@
    ======================================== */
 
 .dsc-season-info {
-    margin-bottom: var(--dsc-spacing-lg);
-    padding: var(--dsc-spacing-md);
+    margin-bottom: var(--dsc-spacing-sm);
+    padding: var(--dsc-spacing-sm);
     background: var(--dsc-bg-secondary);
     border: 1px solid var(--dsc-border-medium);
     border-radius: var(--dsc-radius-md);
@@ -287,7 +287,6 @@
     display: flex;
     align-items: center;
     gap: var(--dsc-spacing-md);
-    margin-bottom: var(--dsc-spacing-sm);
 }
 
 .dsc-season-header i {
@@ -297,9 +296,8 @@
 
 .dsc-season-name {
     font-weight: bold;
-    font-size: var(--dsc-font-size-lg);
+    font-size: var(--dsc-font-size-md);
     color: var(--dsc-text-primary);
-    text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
