@@ -3,3 +3,7 @@
 .specstory/
 node_modules/
 module-template.json
+.vscode/
+.cursorindexignore
+test-season.display.json
+macro-example.json
