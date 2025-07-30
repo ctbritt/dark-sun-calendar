@@ -4,6 +4,6 @@
 node_modules/
 module-template.json
 .vscode/
-.cursorindexignore
-test-season.display.json
-macro-example.json
+.cursorindexingignore
+test-season-display.js
+macro-example.js
